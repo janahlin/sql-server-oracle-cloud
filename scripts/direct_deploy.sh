@@ -1,5 +1,5 @@
 #!/bin/bash
-# Direct deployment script for SQL Server on Oracle Cloud
+# Direct deployment script for SQL Server on Azure
 set -e
 
 # Color codes for output
@@ -28,37 +28,37 @@ terraform init
 
 section "Creating Infrastructure"
 # Check for required variables
-if [ -z "$OCI_TENANCY_OCID" ] || [ -z "$OCI_USER_OCID" ] || [ -z "$OCI_FINGERPRINT" ]; then
-  echo -e "${RED}Error: Required OCI environment variables not set.${NC}"
+if [ -z "$AZURE_SUBSCRIPTION_ID" ] || [ -z "$AZURE_TENANT_ID" ] || [ -z "$AZURE_CLIENT_ID" ] || [ -z "$AZURE_CLIENT_SECRET" ]; then
+  echo -e "${RED}Error: Required Azure environment variables not set.${NC}"
   echo "Please set the following environment variables:"
-  echo "  - OCI_TENANCY_OCID"
-  echo "  - OCI_USER_OCID"
-  echo "  - OCI_FINGERPRINT"
-  echo "  - OCI_PRIVATE_KEY_PATH (defaults to ~/.oci/oci_api_key.pem)"
-  echo "  - OCI_REGION (defaults to eu-stockholm-1)"
+  echo "  - AZURE_SUBSCRIPTION_ID"
+  echo "  - AZURE_TENANT_ID"
+  echo "  - AZURE_CLIENT_ID"
+  echo "  - AZURE_CLIENT_SECRET"
+  echo "  - AZURE_LOCATION (defaults to westeurope)"
   exit 1
 fi
 
 # Set default values for optional variables
-OCI_PRIVATE_KEY_PATH="${OCI_PRIVATE_KEY_PATH:-~/.oci/oci_api_key.pem}"
-OCI_REGION="${OCI_REGION:-eu-stockholm-1}"
-OCI_COMPARTMENT_ID="${OCI_COMPARTMENT_ID:-$OCI_TENANCY_OCID}"
-AVAILABILITY_DOMAIN="${AVAILABILITY_DOMAIN:-GiQi:EU-STOCKHOLM-1-AD-1}"
-SHAPE="${SHAPE:-VM.Standard.E2.1.Micro}"  # Using Free Tier eligible shape
+AZURE_LOCATION="${AZURE_LOCATION:-westeurope}"
+AZURE_RESOURCE_GROUP="${AZURE_RESOURCE_GROUP:-sql-server-rg}"
+AZURE_VM_SIZE="${AZURE_VM_SIZE:-Standard_B1s}"
+AZURE_ADMIN_USERNAME="${AZURE_ADMIN_USERNAME:-azureuser}"
+AZURE_ADMIN_PASSWORD="${AZURE_ADMIN_PASSWORD:-YourSecurePassword123!}"
 
 # Create the basic infrastructure with all variables on command line
 echo -e "${GREEN}Creating infrastructure using secure environment variables...${NC}"
 terraform apply -auto-approve \
-  -var="tenancy_ocid=$OCI_TENANCY_OCID" \
-  -var="user_ocid=$OCI_USER_OCID" \
-  -var="fingerprint=$OCI_FINGERPRINT" \
-  -var="private_key_path=$OCI_PRIVATE_KEY_PATH" \
-  -var="region=$OCI_REGION" \
-  -var="compartment_id=$OCI_COMPARTMENT_ID" \
-  -var="availability_domain=$AVAILABILITY_DOMAIN" \
-  -var="windows_image_id=ocid1.image.oc1.eu-stockholm-1.aaaaaaaavvubpflzqzb3i3fgw2rj72jsomhxubi4g7mjgp5jdofokqrbkn5q" \
-  -var="ssh_public_key=$(cat ~/.ssh/id_rsa.pub)" \
-  -var="shape=$SHAPE"
+  -var="subscription_id=$AZURE_SUBSCRIPTION_ID" \
+  -var="tenant_id=$AZURE_TENANT_ID" \
+  -var="client_id=$AZURE_CLIENT_ID" \
+  -var="client_secret=$AZURE_CLIENT_SECRET" \
+  -var="location=$AZURE_LOCATION" \
+  -var="resource_group_name=$AZURE_RESOURCE_GROUP" \
+  -var="vm_size=$AZURE_VM_SIZE" \
+  -var="admin_username=$AZURE_ADMIN_USERNAME" \
+  -var="admin_password=$AZURE_ADMIN_PASSWORD" \
+  -var="ssh_public_key=$(cat ~/.ssh/id_rsa.pub)"
 
 # Get output
 section "Deployment Output"

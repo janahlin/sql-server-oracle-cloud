@@ -1,5 +1,5 @@
 #!/bin/bash
-# Comprehensive test script for SQL Server on Oracle Cloud deployment
+# Comprehensive test script for SQL Server on Azure deployment
 set -e
 
 # Color codes for output
@@ -49,8 +49,6 @@ fi
 section "Checking Directory Structure"
 directories=(
     "terraform/environments/dev"
-    "terraform/modules/windows_vm"
-    "terraform/modules/network"
     "ansible/playbooks"
     "ansible/roles"
     "ansible/group_vars/all"
@@ -69,12 +67,13 @@ section "Checking Critical Files"
 files=(
     "terraform/environments/dev/main.tf"
     "terraform/environments/dev/variables.tf"
-    "terraform/modules/windows_vm/main.tf"
-    "terraform/modules/network/main.tf"
+    "terraform/environments/dev/terraform.tfvars"
     "ansible/site.yml"
     "ansible/playbooks/deploy_infrastructure.yml"
     "ansible/playbooks/setup_sql_server.yml"
     "ansible/ansible.cfg"
+    "ansible/group_vars/all/vars.yml"
+    "ansible/group_vars/all/vault.yml"
 )
 
 for file in "${files[@]}"; do
@@ -88,9 +87,9 @@ terraform validate
 check_result "Terraform validation" "fatal"
 
 # Check Terraform plan readiness
-if [ -f "terraform.tfvars.json" ]; then
+if [ -f "terraform.tfvars" ]; then
     echo "Running terraform plan..."
-    terraform plan -var-file=terraform.tfvars.json -no-color > /tmp/tf_plan_output 2>&1 || true
+    terraform plan -no-color > /tmp/tf_plan_output 2>&1 || true
 
     if grep -q "Error:" /tmp/tf_plan_output; then
         echo -e "${RED}✗ Terraform plan has errors${NC}"
@@ -100,7 +99,7 @@ if [ -f "terraform.tfvars.json" ]; then
         echo -e "${GREEN}✓ Terraform plan produced no errors${NC}"
     fi
 else
-    echo -e "${YELLOW}⚠ terraform.tfvars.json not found, skipping terraform plan${NC}"
+    echo -e "${YELLOW}⚠ terraform.tfvars not found, skipping terraform plan${NC}"
 fi
 cd - > /dev/null
 
@@ -116,19 +115,19 @@ else
 fi
 cd - > /dev/null
 
-section "Checking OCI CLI Configuration"
-if command -v oci &> /dev/null; then
-    echo "OCI CLI installed, checking configuration..."
-    oci iam compartment list --query 'data[0].id' --output table &> /dev/null
+section "Checking Azure CLI Configuration"
+if command -v az &> /dev/null; then
+    echo "Azure CLI installed, checking configuration..."
+    az account show &> /dev/null
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN}✓ OCI CLI correctly configured${NC}"
+        echo -e "${GREEN}✓ Azure CLI correctly configured${NC}"
     else
-        echo -e "${YELLOW}⚠ OCI CLI not properly configured${NC}"
-        echo "Run 'oci setup config' to configure the CLI"
+        echo -e "${YELLOW}⚠ Azure CLI not properly configured${NC}"
+        echo "Run 'az login' to log in to Azure"
     fi
 else
-    echo -e "${YELLOW}⚠ OCI CLI not installed${NC}"
-    echo "Run 'pip install oci-cli' to install"
+    echo -e "${YELLOW}⚠ Azure CLI not installed${NC}"
+    echo "Install Azure CLI to manage your Azure resources"
 fi
 
 section "Testing Summary"

@@ -2,10 +2,14 @@
 - name: Setup SQL Server on Windows VM
   hosts: windows
   gather_facts: true
+  become: false
   vars:
     ansible_connection: winrm
     ansible_winrm_server_cert_validation: ignore
     sql_server_install_dir: "C:\\Program Files\\Microsoft SQL Server"
+    sql_server_data_dir: "C:\\SQLData"
+    sql_server_log_dir: "C:\\SQLLogs"
+    sql_server_backup_dir: "C:\\SQLBackup"
 
   tasks:
     - name: Wait for WinRM to be available

@@ -1,6 +1,6 @@
 ---
 # Import infrastructure deployment playbook
-- name: Deploy infrastructure to Oracle Cloud
+- name: Deploy infrastructure to Azure
   import_playbook: "{{ playbook_dir }}/playbooks/deploy_infrastructure.yml"
 
 # Import SQL Server configuration playbook

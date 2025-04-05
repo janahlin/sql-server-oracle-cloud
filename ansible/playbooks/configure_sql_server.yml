@@ -1,0 +1,149 @@
+---
+- name: Configure SQL Server on Windows VM
+  hosts: windows
+  gather_facts: true
+  become: false
+
+  vars:
+    sql_server_install_dir: 'C:\SQLServer2019'
+    sql_server_data_dir: 'D:\SQLData'
+    sql_server_log_dir: 'D:\SQLLogs'
+    sql_server_backup_dir: 'D:\SQLBackup'
+    sql_server_media_url: 'https://go.microsoft.com/fwlink/?linkid=866658'
+    sql_server_media_file: 'C:\SQLServer2019-DEV.exe'
+    # SQL SA password - you should change this immediately after deployment
+    sql_sa_password: "ChangeThisPasswordOnFirstLogin!"
+
+  tasks:
+    - name: Wait for system to become reachable
+      ansible.builtin.wait_for_connection:
+        timeout: 900
+
+    - name: Gather facts
+      ansible.builtin.setup:
+
+    - name: Create SQL Server installation directories
+      ansible.windows.win_file:
+        path: "{{ item }}"
+        state: directory
+      loop:
+        - "{{ sql_server_install_dir }}"
+        - "{{ sql_server_data_dir }}"
+        - "{{ sql_server_log_dir }}"
+        - "{{ sql_server_backup_dir }}"
+
+    - name: Initialize and format data disk
+      ansible.windows.win_shell: |
+        $disk = Get-Disk | Where-Object PartitionStyle -eq 'RAW'
+        if ($disk) {
+          $disk | Initialize-Disk -PartitionStyle GPT -PassThru |
+          New-Partition -DriveLetter D -UseMaximumSize |
+          Format-Volume -FileSystem NTFS -NewFileSystemLabel "SQLData" -Confirm:$false
+        }
+      args:
+        creates: D:\
+
+    - name: Download SQL Server Developer Edition
+      ansible.windows.win_get_url:
+        url: "{{ sql_server_media_url }}"
+        dest: "{{ sql_server_media_file }}"
+        timeout: 900
+
+    - name: Extract SQL Server media
+      ansible.windows.win_shell: |
+        Start-Process -FilePath "{{ sql_server_media_file }}" -ArgumentList "/q /x:{{ sql_server_install_dir }}" -Wait
+      args:
+        creates: "{{ sql_server_install_dir }}\\setup.exe"
+
+    - name: Create SQL Server configuration file
+      ansible.windows.win_copy:
+        dest: "{{ sql_server_install_dir }}\\ConfigurationFile.ini"
+        content: |
+          [OPTIONS]
+          ACTION="Install"
+          IACCEPTSQLSERVERLICENSETERMS="true"
+          FEATURES=SQLENGINE
+          INSTANCENAME="MSSQLSERVER"
+          SQLSYSADMINACCOUNTS="{{ ansible_user }}"
+          SQLBACKUPDIR="{{ sql_server_backup_dir }}"
+          SQLUSERDBDIR="{{ sql_server_data_dir }}"
+          SQLUSERDBLOGDIR="{{ sql_server_log_dir }}"
+          SQLCOLLATION="SQL_Latin1_General_CP1_CI_AS"
+          TCPENABLED="1"
+          SECURITYMODE="SQL"
+          SAPWD="{{ sql_sa_password }}"
+
+    - name: Install SQL Server
+      ansible.windows.win_shell: |
+        Start-Process -FilePath "{{ sql_server_install_dir }}\\setup.exe" -ArgumentList "/ConfigurationFile={{ sql_server_install_dir }}\\ConfigurationFile.ini /QUIETSIMPLE" -Wait -NoNewWindow
+      args:
+        creates: C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\Binn\sqlservr.exe
+      register: sql_install
+      failed_when: false
+
+    - name: Ensure SQL Server service is running
+      ansible.windows.win_service:
+        name: MSSQLSERVER
+        state: started
+        enabled: yes
+
+    - name: Configure SQL Server for remote access
+      ansible.windows.win_shell: |
+        # Enable TCP/IP protocol
+        $smo = [System.Reflection.Assembly]::LoadWithPartialName('Microsoft.SqlServer.SqlWmiManagement')
+        $wmi = New-Object Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer
+        $tcp = $wmi.GetSmoObject("ManagedComputer[@Name='$env:COMPUTERNAME']/ServerInstance[@Name='MSSQLSERVER']/ServerProtocol[@Name='Tcp']")
+        $tcp.IsEnabled = $true
+        $tcp.Alter()
+
+        # Allow remote connections
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQLServer" -Name "LoginMode" -Value 2
+
+        # Restart SQL Server service to apply changes
+        Restart-Service -Name "MSSQLSERVER" -Force
+
+        # Create marker file
+        Set-Content -Path "C:\Windows\Temp\sql_remote_access_configured.txt" -Value "Configured"
+      args:
+        creates: C:\Windows\Temp\sql_remote_access_configured.txt
+
+    - name: Allow SQL Server through Windows Firewall
+      ansible.windows.win_shell: |
+        # Clear any existing SQL Server rules first
+        Get-NetFirewallRule -DisplayName "SQL Server*" | Remove-NetFirewallRule -ErrorAction SilentlyContinue
+
+        # Create a new rule for SQL Server
+        New-NetFirewallRule -DisplayName "SQL Server" -Direction Inbound -Protocol TCP -LocalPort 1433 -Action Allow -Profile Any
+
+        # Create a rule for SQL Browser (helps SSMS find instances)
+        New-NetFirewallRule -DisplayName "SQL Browser UDP" -Direction Inbound -Protocol UDP -LocalPort 1434 -Action Allow -Profile Any
+
+        # Create marker file
+        Set-Content -Path "C:\Windows\Temp\firewall_sql_configured.txt" -Value "Configured"
+      args:
+        creates: C:\Windows\Temp\firewall_sql_configured.txt
+
+    - name: Create test database
+      ansible.windows.win_shell: |
+        sqlcmd -Q "IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = 'TestDB') CREATE DATABASE TestDB"
+      register: create_db_result
+      failed_when: create_db_result.rc != 0 and create_db_result.stderr != ""
+
+    - name: Create a SQL login for remote access testing
+      ansible.windows.win_shell: |
+        sqlcmd -Q "IF NOT EXISTS (SELECT * FROM sys.server_principals WHERE name = 'remote_test') CREATE LOGIN remote_test WITH PASSWORD = '{{ sql_sa_password }}'"
+        sqlcmd -Q "IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'remote_test') USE TestDB; CREATE USER remote_test FOR LOGIN remote_test"
+        sqlcmd -Q "USE TestDB; ALTER ROLE db_owner ADD MEMBER remote_test"
+      register: create_login_result
+      failed_when: create_login_result.rc != 0 and create_login_result.stderr != ""
+
+    - name: Display success message and connection instructions
+      ansible.builtin.debug:
+        msg:
+          - "SQL Server installation completed successfully."
+          - "Connect using SQL Server Management Studio (SSMS) from your local Windows computer."
+          - "Server: {{ ansible_host }},1433"
+          - "Authentication: SQL Server Authentication"
+          - "Login: sa (or remote_test)"
+          - "Password: {{ sql_sa_password }} (Change this after your first login!)"
+          - "Available database: TestDB"

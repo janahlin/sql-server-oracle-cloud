@@ -1,4 +1,15 @@
-compartment_id      = "ocid1.compartment.oc1..exampleuniqueID"
-availability_domain = "AD-1"
-windows_image_id    = "ocid1.image.oc1..exampleuniqueID"
-ssh_public_key      = "ssh-rsa AAAA...example"
+# Azure Authentication
+subscription_id     = "your-subscription-id"
+tenant_id           = "your-tenant-id"
+client_id           = "your-client-id"
+client_secret       = "your-client-secret"
+
+# Azure Configuration
+location            = "westeurope"
+resource_group_name = "sql-server-rg"
+
+# VM Configuration
+admin_username      = "azureuser"
+admin_password      = "YourSecurePassword123!"
+vm_size             = "Standard_B1s"
+ssh_public_key      = "ssh-rsa AAAAB3N...your-key"

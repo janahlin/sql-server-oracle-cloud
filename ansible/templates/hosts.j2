@@ -2,7 +2,7 @@
 sqlserver ansible_host={{ windows_vm_ip }}
 
 [windows:vars]
-ansible_user=Administrator
+ansible_user={{ admin_username | default('azureuser') }}
 ansible_connection=winrm
 ansible_winrm_server_cert_validation=ignore
 ansible_winrm_transport=ntlm

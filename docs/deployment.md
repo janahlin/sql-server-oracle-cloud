@@ -1,106 +1,134 @@
-# Deployment of SQL Server Developer Edition in Oracle Cloud
+# Deployment Guide
 
-This document describes how to deploy SQL Server Developer Edition in Oracle Cloud Free Tier using Ansible.
+This document provides detailed instructions for deploying SQL Server Developer Edition in Azure using this repository.
 
 ## Prerequisites
 
-- Oracle Cloud account with Free Tier
-- Controller VM with access to Oracle Cloud
-- Terraform 1.0+
-- Ansible 2.9+
-- Git
+Before you begin, ensure you have:
 
-## Step 1: Clone the repository
+1. **Azure Account**: An active Microsoft Azure subscription.
+2. **Azure CLI**: Installed and configured on your local machine.
+3. **Required Tools**:
+   - Terraform v1.0.0 or later
+   - Ansible v2.9.0 or later
+   - Python 3.6 or later
 
-```bash
-git clone https://github.com/janahlin/sql-server-oracle-cloud.git
-cd sql-server-oracle-cloud
-```
+## Azure Authentication Setup
 
-## Step 2: Get Oracle Cloud Information
-
-Use the provided script to gather your OCI information:
-
-```bash
-./scripts/get_oci_info.sh
-```
-
-The script will output your OCI configuration details that you'll need for the Ansible vault.
-
-## Step 3: Configure Ansible Vault
-
-1. Create a vault password file (not tracked in Git):
+1. **Log in to Azure**:
    ```bash
-   echo "your-secure-vault-password" > ansible/.vault_pass.txt
-   chmod 600 ansible/.vault_pass.txt
+   az login
    ```
 
-2. Create and edit the vault file with your sensitive information:
+2. **Create a Service Principal** (optional, for automated deployments):
    ```bash
-   cd ansible
-   ansible-vault create group_vars/all/vault.yml
+   az ad sp create-for-rbac --name "sql-server-deployment" --role Contributor --scopes /subscriptions/YOUR_SUBSCRIPTION_ID
    ```
 
-3. Add your sensitive information to the vault (or copy from the output of get_oci_info.sh):
-   ```yaml
-   # Oracle Cloud credentials
-   vault_oci_tenancy_ocid: "ocid1.tenancy.oc1..exampleuniqueID"
-   vault_oci_user_ocid: "ocid1.user.oc1..exampleuniqueID"
-   vault_oci_fingerprint: "xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx"
-   vault_oci_private_key_path: "~/.oci/oci_api_key.pem"
+3. **Record the credentials** returned from the command above:
+   - `appId` (this is your `client_id`)
+   - `password` (this is your `client_secret`)
+   - `tenant` (this is your `tenant_id`)
 
-   # Windows VM credentials
-   vault_windows_admin_password: "YourSecurePassword123!"
-   vault_ssh_private_key_path: "~/.ssh/id_rsa"
-   vault_ssh_public_key: "ssh-rsa AAAA...yourpublickey"
+## Configuration
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/your-organization/sql-server-azure.git
+   cd sql-server-azure
    ```
 
-## Step 4: Configure non-sensitive variables
+2. **Create terraform.tfvars file**:
+   Create a file at `terraform/environments/dev/terraform.tfvars` with the following content:
 
-1. Edit the non-sensitive variables in `ansible/group_vars/all/vars.yml`:
-   ```yaml
-   # Oracle Cloud configuration
-   oci_region: "eu-amsterdam-1"
-   oci_compartment_id: "{{ vault_oci_tenancy_ocid }}"  # Using tenancy as compartment for simplicity
+   ```hcl
+   # Azure Authentication
+   subscription_id     = "your-subscription-id"
+   tenant_id           = "your-tenant-id"
+   client_id           = "your-client-id"
+   client_secret       = "your-client-secret"
 
-   # VM configuration
-   vm_shape: "VM.Standard.A1.Flex"
-   vm_ocpus: 2
-   vm_memory_in_gbs: 8
-   availability_domain: "AD-1"
-   windows_image_id: "ocid1.image.oc1..exampleimageID"  # Windows Server 2019 image OCID
+   # Azure Configuration
+   location            = "westeurope"
+   resource_group_name = "sql-server-rg"
+
+   # VM Configuration
+   admin_username      = "azureuser"
+   admin_password      = "YourSecurePassword123!"
+   vm_size             = "Standard_B1s"
+   ssh_public_key      = "ssh-rsa AAAAB3N... your-ssh-key"
    ```
 
-## Step 5: Deploy the entire infrastructure
+3. **Update Ansible inventory**:
+   The IP address will be automatically updated during deployment, but you can modify other settings in `ansible/inventory/hosts.yml` if needed.
 
-The `ansible.cfg` file is already configured to use your vault password file, so you can simply run:
+## Deployment
+
+1. **Initialize Terraform**:
+   ```bash
+   cd terraform/environments/dev
+   terraform init
+   ```
+
+2. **Validate the Terraform plan**:
+   ```bash
+   terraform plan
+   ```
+
+3. **Deploy the infrastructure**:
+   ```bash
+   terraform apply -auto-approve
+   ```
+
+4. **Run Ansible playbook** to configure SQL Server:
+   ```bash
+   cd ../../../ansible
+   ansible-playbook -i inventory/hosts.yml playbooks/configure_sql_server.yml
+   ```
+
+Alternatively, you can use the deployment script which handles both steps:
 
 ```bash
-cd ansible
-ansible-playbook site.yml
+./scripts/deploy.sh
 ```
 
-This playbook will:
-1. Create the Terraform configuration from Ansible variables
-2. Apply the Terraform configuration to create the infrastructure
-3. Update the Ansible inventory with the Windows VM IP
-4. Configure the Windows VM
-5. Install and configure SQL Server
+## Connection Details
 
-## Step 6: Verify the installation
+After successful deployment, you can connect to:
 
-1. Connect to SQL Server via SQL Server Management Studio (SSMS) or Azure Data Studio
-2. Verify that SQL Server is correctly configured
-3. Check the performance settings
+1. **SQL Server**:
+   - **Server**: The public IP address (shown in the deployment output)
+   - **Authentication**: Windows Authentication
+   - **Username**: azureuser
+   - **Password**: The password specified in terraform.tfvars
 
-## Troubleshooting
+2. **Windows VM (via RDP)**:
+   - **Host**: The public IP address (shown in the deployment output)
+   - **Username**: azureuser
+   - **Password**: The password specified in terraform.tfvars
 
-If you encounter problems during deployment, check the following:
+## Clean Up
 
-1. Oracle Cloud authentication is correctly configured in the vault
-2. The Windows image ID is valid and accessible
-3. Ansible can connect to the Windows VM
-4. WinRM is correctly configured on Windows Server
-5. Network connection to SQL Server is working
+To destroy all created resources:
 
-For more help, see [Troubleshooting.md](troubleshooting.md).
+```bash
+cd terraform/environments/dev
+terraform destroy -auto-approve
+```
+
+## Advanced Configuration
+
+### Customizing VM Size
+
+To modify the VM specifications, update the `vm_size` value in `terraform.tfvars`. Available options include:
+
+- `Standard_B1s`: 1 vCPU, 1 GB RAM (minimum for development)
+- `Standard_B2s`: 2 vCPU, 4 GB RAM (recommended for better performance)
+- `Standard_B4ms`: 4 vCPU, 16 GB RAM (for more intensive workloads)
+
+### Customizing Network Configuration
+
+Edit the `main.tf` file to modify:
+- Virtual Network address space
+- Subnet configuration
+- Network Security Group rules

@@ -1,70 +1,109 @@
-# SQL Server Developer Edition in Oracle Cloud
+# SQL Server Developer Edition in Azure
 
-This repository contains infrastructure as code for deploying SQL Server Developer Edition in Oracle Cloud Free Tier.
+This repository contains the code to deploy SQL Server Developer Edition on a Windows Server in Microsoft Azure using Terraform and Ansible.
 
 ## Architecture
 
-The architecture consists of the following components:
+The architecture consists of:
 
-1. **Windows Server 2019 VM** in Oracle Cloud Free Tier
-   - 2 OCPU (ARM64)
-   - 8 GB RAM
-   - 100 GB storage
+- Windows Server 2019 VM in Azure
+- SQL Server Developer Edition installed on the VM
+- Virtual Network with Security Groups
+- Controller VM/machine to run Terraform and Ansible
 
-2. **SQL Server Developer Edition**
-   - Installed on Windows Server 2019
-   - Configured for optimal performance in development environment
-
-3. **Controller VM**
-   - Used to run Terraform and Ansible
-   - Manages deployment of infrastructure and configuration
+For more details, see [Architecture](docs/architecture.md).
 
 ## Prerequisites
 
-- Oracle Cloud account with Free Tier
-- Controller VM with access to Oracle Cloud
-- Terraform 1.0+
-- Ansible 2.9+
-- Git
+- Microsoft Azure account
+- [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) installed
+- A machine/VM to serve as a Controller with:
+  - [Terraform](https://www.terraform.io/downloads.html) (v1.0.0+)
+  - [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) (v2.9+)
+  - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 
 ## Quick Start
 
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/your-username/sql-server-oracle-cloud.git
-   cd sql-server-oracle-cloud
+1. **Clone this repository**:
+   ```
+   git clone https://github.com/yourusername/sql-server-azure.git
+   cd sql-server-azure
    ```
 
-2. Configure Oracle Cloud authentication:
-   - Create an API key in Oracle Cloud Console
-   - Save the private key in `~/.oci/oci_api_key.pem`
-   - Configure `~/.oci/config` with your credentials
+2. **Configure Azure authentication**:
+   - Create a Service Principal:
+     ```
+     az login
+     az ad sp create-for-rbac --name "sql-server-sp" --role contributor --scopes /subscriptions/{subscription-id}
+     ```
+   - Note the `appId` (client_id), `password` (client_secret), `tenant` (tenant_id), and your subscription ID
+   - Create a `terraform.tfvars` file in the `terraform/environments/dev` directory:
+     ```
+     cp terraform/environments/dev/terraform.tfvars.example terraform/environments/dev/terraform.tfvars
+     ```
+   - Edit the file with your Azure credentials
 
-3. Initialize Terraform:
-   ```bash
+3. **Initialize Terraform**:
+   ```
    cd terraform/environments/dev
    terraform init
    ```
 
-4. Deploy the infrastructure:
-   ```bash
-   terraform apply
+4. **Deploy Infrastructure**:
+   ```
+   terraform apply -auto-approve
+   ```
+   Or use Ansible:
+   ```
+   cd ../../../
+   ansible-playbook ansible/playbooks/deploy_infrastructure.yml
    ```
 
-5. Configure SQL Server with Ansible:
-   ```bash
-   cd ../../../ansible
-   ansible-playbook -i inventory playbooks/setup_sql_server.yml
+5. **Configure SQL Server with Ansible**:
+   ```
+   ansible-playbook -i ansible/inventory/hosts ansible/site.yml
+   ```
+
+## Using Ansible Vault Variables with Terraform
+
+This project uses Ansible Vault to securely store sensitive information. To use these variables with Terraform:
+
+1. **Decrypt the Ansible vault file** (you'll need the vault password):
+   ```
+   ansible-vault decrypt ansible/group_vars/all/vault.yml
+   ```
+
+2. **Generate Terraform variables from Ansible vault**:
+   ```
+   ./scripts/generate_tfvars.py
+   ```
+   This will create a `terraform.tfvars` file in the `terraform/environments/dev` directory based on your Ansible vault variables.
+
+3. **Re-encrypt the Ansible vault file** when done:
+   ```
+   ansible-vault encrypt ansible/group_vars/all/vault.yml
    ```
 
 ## Resource Allocation
 
-Oracle Cloud Free Tier offers the following resources:
-- 4 OCPU (ARM64)
-- 24 GB RAM
-- 200 GB Block Storage (2 volumes)
+Azure Standard_B1s VM:
+- 1 vCPU
+- 1 GB RAM
+- 100 GB disk space
 
-This deployment uses:
-- 2 OCPU (50%)
-- 8 GB RAM (33%)
-- 100 GB Block Storage (50%)
+Windows Server 2019 with SQL Server Developer Edition requires:
+- 1 CPU (minimum)
+- 1 GB RAM (minimum, 2+ GB recommended for development)
+- 40-60 GB disk space (Windows + SQL Server)
+
+## Development
+
+For development guidelines, see [Development](docs/development.md).
+
+## Troubleshooting
+
+For troubleshooting common issues, see [Troubleshooting](docs/troubleshooting.md).
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

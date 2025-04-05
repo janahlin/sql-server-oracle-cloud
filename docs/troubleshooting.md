@@ -1,131 +1,115 @@
 # Troubleshooting Guide
 
-This document provides troubleshooting steps for common issues that may be encountered during the deployment of SQL Server in Oracle Cloud.
+This document provides solutions to common issues you might encounter when deploying SQL Server on Azure using this repository.
 
-## Terraform Issues
+## Azure Authentication Issues
 
-### Authentication Problems
+**Symptom**: Terraform fails with authentication errors.
 
-**Issue:** Terraform fails with authentication errors.
+**Solutions**:
+1. Verify that your Azure credentials are correct in the `terraform.tfvars` file.
+2. Ensure that the Service Principal has Contributor permissions on the subscription.
+3. Check if the credentials have expired. Service Principal passwords expire by default.
+4. Run `az login` to verify that your CLI can access Azure.
 
-**Solution:**
-1. Verify your Oracle Cloud credentials in `~/.oci/config`
-2. Ensure your API private key is correctly formatted and located at `~/.oci/oci_api_key.pem`
-3. Confirm that your user has the necessary permissions in Oracle Cloud
+**Example error**:
+```
+Error: Error building account: Error getting authenticated object ID: Error parsing json result from the Azure CLI: Error waiting for the Azure CLI: exit status 1
+```
 
-### Resource Creation Failures
+## Terraform Deployment Failures
 
-**Issue:** Terraform fails to create resources.
+**Symptom**: Terraform apply fails during resource creation.
 
-**Solution:**
-1. Check Oracle Cloud service limits for your account
-2. Verify that the specified shape is available in your region
-3. Review the detailed error messages in the Terraform output
+**Solutions**:
+1. Check if the requested VM size is available in your selected region.
+2. Verify that you have not reached quotas or limits on your Azure subscription.
+3. Try using a different region by changing the `location` variable.
+4. Run `terraform plan` to identify the specific issue before applying.
 
-## Ansible Issues
+**Example error**:
+```
+Error: compute.VirtualMachinesClient#CreateOrUpdate: Failure sending request: StatusCode=400 -- Original Error: Code="SkuNotAvailable" Message="The requested size for resource '/subscriptions/...' is currently not available in location 'westeurope' zones '' for subscription '...'. Please try another size or deploy to a different location or zones."
+```
 
-### Connection Problems
+## Windows VM Connectivity Issues
 
-**Issue:** Ansible cannot connect to the Windows VM.
+**Symptom**: Cannot connect to Windows VM via RDP or WinRM.
 
-**Solution:**
-1. Verify that the VM is running
-2. Check that the security list allows WinRM traffic (TCP 5985/5986)
-3. Ensure that the VM's public IP is correctly specified in the inventory
-4. Verify that WinRM is properly configured on the VM
+**Solutions**:
+1. Verify that the VM is running in the Azure portal.
+2. Check if the Network Security Group allows traffic on ports 3389 (RDP) and 5985/5986 (WinRM).
+3. Ensure that the VM's public IP address is correct in your Ansible inventory.
+4. Reset the VM's password from the Azure portal if necessary.
 
-### SQL Server Installation Failures
+**Commands to check**:
+```bash
+# Check VM status
+az vm show -g sql-server-rg -n sqlserver-dev --query "powerState"
 
-**Issue:** SQL Server installation fails.
+# Check NSG rules
+az network nsg rule list -g sql-server-rg --nsg-name sql-server-vnet-nsg -o table
+```
 
-**Solution:**
-1. Check that the VM meets the SQL Server system requirements
-2. Verify that the installation media is accessible
-3. Review the SQL Server installation logs at `C:\Program Files\Microsoft SQL Server\...\Setup Bootstrap\Log\`
+## Ansible Connection Failures
 
-## Windows VM Issues
+**Symptom**: Ansible fails to connect to the Windows VM.
 
-### WinRM Configuration
+**Solutions**:
+1. Verify that WinRM is properly configured on the VM.
+2. Check that the Ansible inventory file has the correct IP address.
+3. Ensure that the username and password are correct.
+4. Wait a few minutes after VM creation for services to fully start.
 
-**Issue:** WinRM is not properly configured.
+**Example error**:
+```
+fatal: [sqlserver]: UNREACHABLE! => {"changed": false, "msg": "ssl: HTTPSConnectionPool(host='X.X.X.X', port=5986): Max retries exceeded with url: /wsman (Caused by ConnectTimeoutError(<urllib3.connection.HTTPSConnection object at 0x7f05d9f97af0>, 'Connection to X.X.X.X timed out. (connect timeout=30)'))", "unreachable": true}
+```
 
-**Solution:**
-1. Connect to the VM using RDP
-2. Run the following PowerShell command as Administrator:
-   ```powershell
-   winrm quickconfig
-   ```
-3. Verify that the WinRM service is running:
-   ```powershell
-   Get-Service WinRM
-   ```
+## SQL Server Installation Issues
 
-### Disk Configuration
+**Symptom**: SQL Server installation fails during Ansible playbook execution.
 
-**Issue:** The additional disk for SQL Server data is not properly configured.
+**Solutions**:
+1. Ensure VM has enough resources (minimum 1.4 GB RAM for SQL Server).
+2. Check that the Windows VM can access the internet to download SQL Server.
+3. Verify that the installation script has proper permissions.
+4. Manually connect to the VM and check Windows Event Logs for specific errors.
 
-**Solution:**
-1. Connect to the VM using RDP
-2. Open Disk Management (diskmgmt.msc)
-3. Check if the disk is visible but not initialized
-4. Initialize the disk and format it with NTFS
+**Manual SQL Server installation check**:
+```powershell
+# Check SQL Server service status
+Get-Service -Name MSSQLSERVER
 
-## SQL Server Issues
+# Check SQL Server error log
+Get-Content "C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\Log\ERRORLOG"
+```
 
-### Remote Connection Problems
+## Disk Space Issues
 
-**Issue:** Cannot connect to SQL Server remotely.
+**Symptom**: Deployment fails due to insufficient disk space.
 
-**Solution:**
-1. Verify that SQL Server is running:
-   ```powershell
-   Get-Service MSSQLSERVER
-   ```
-2. Check that SQL Server is configured for remote connections:
-   ```sql
-   EXEC sp_configure 'remote access', 1;
-   RECONFIGURE;
-   ```
-3. Ensure that TCP/IP protocol is enabled in SQL Server Configuration Manager
-4. Verify that the Windows Firewall allows SQL Server traffic (TCP 1433)
+**Solutions**:
+1. Check the available disk space on the VM.
+2. Increase the disk size in the Terraform configuration.
+3. Clean up temporary installation files.
 
-### Authentication Issues
+**Commands to check**:
+```powershell
+# Check disk space on Windows
+Get-PSDrive -PSProvider FileSystem
+```
 
-**Issue:** Authentication fails when connecting to SQL Server.
+## Azure Resource Constraints
 
-**Solution:**
-1. Verify that SQL Server is configured for Windows Authentication
-2. Check that the user has the necessary permissions in SQL Server
-3. Verify the SQL Server error logs for specific authentication errors
+**Symptom**: Deployment fails due to resource quotas or constraints.
 
-## Network Issues
+**Solutions**:
+1. Verify that your subscription has enough quota for the requested resources.
+2. Consider using a different VM size or region.
+3. Request a quota increase from Microsoft if needed.
 
-### Security List Configuration
-
-**Issue:** Network traffic is blocked.
-
-**Solution:**
-1. Verify that the security list allows the necessary traffic:
-   - RDP (TCP 3389)
-   - WinRM (TCP 5985/5986)
-   - SQL Server (TCP 1433)
-2. Check that the security list is correctly associated with the subnet
-
-### Connectivity Testing
-
-To test network connectivity:
-
-1. Test RDP connectivity:
-   ```bash
-   nc -zv <windows-vm-ip> 3389
-   ```
-
-2. Test WinRM connectivity:
-   ```bash
-   nc -zv <windows-vm-ip> 5985
-   ```
-
-3. Test SQL Server connectivity:
-   ```bash
-   nc -zv <windows-vm-ip> 1433
-   ```
+**Command to check quotas**:
+```bash
+az vm list-usage --location westeurope -o table
+```

@@ -1,131 +1,109 @@
 terraform {
   required_version = ">= 1.0.0"
   required_providers {
-    oci = {
-      source  = "oracle/oci"
-      version = ">= 4.0.0"
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 3.0"
     }
   }
 }
 
-variable "compartment_id" {
-  description = "OCID of the compartment"
+variable "resource_group_name" {
+  description = "Name of the resource group"
   type        = string
 }
 
-variable "vcn_name" {
-  description = "Name of the VCN"
+variable "location" {
+  description = "Azure region where resources will be created"
   type        = string
 }
 
-variable "vcn_cidr" {
-  description = "CIDR block for the VCN"
+variable "vnet_name" {
+  description = "Name of the virtual network"
   type        = string
-  default     = "10.0.0.0/16"
 }
 
-# Create a Virtual Cloud Network (VCN)
-resource "oci_core_vcn" "vcn" {
-  compartment_id = var.compartment_id
-  display_name   = var.vcn_name
-  cidr_block     = var.vcn_cidr
-  dns_label      = "sqlvcn"
+variable "vnet_address_space" {
+  description = "Address space for the VNet"
+  type        = list(string)
+  default     = ["10.0.0.0/16"]
 }
 
-# Create an Internet Gateway
-resource "oci_core_internet_gateway" "internet_gateway" {
-  compartment_id = var.compartment_id
-  display_name   = "${var.vcn_name}-igw"
-  vcn_id         = oci_core_vcn.vcn.id
+# Create a Virtual Network
+resource "azurerm_virtual_network" "vnet" {
+  name                = var.vnet_name
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  address_space       = var.vnet_address_space
 }
 
-# Create a Route Table
-resource "oci_core_route_table" "route_table" {
-  compartment_id = var.compartment_id
-  vcn_id         = oci_core_vcn.vcn.id
-  display_name   = "${var.vcn_name}-rt"
-
-  route_rules {
-    destination       = "0.0.0.0/0"
-    destination_type  = "CIDR_BLOCK"
-    network_entity_id = oci_core_internet_gateway.internet_gateway.id
-  }
+# Create a Subnet
+resource "azurerm_subnet" "subnet" {
+  name                 = "${var.vnet_name}-subnet"
+  resource_group_name  = var.resource_group_name
+  virtual_network_name = azurerm_virtual_network.vnet.name
+  address_prefixes     = [cidrsubnet(var.vnet_address_space[0], 8, 1)]
 }
 
-# Create a Security List
-resource "oci_core_security_list" "security_list" {
-  compartment_id = var.compartment_id
-  vcn_id         = oci_core_vcn.vcn.id
-  display_name   = "${var.vcn_name}-sl"
+# Create a Network Security Group
+resource "azurerm_network_security_group" "nsg" {
+  name                = "${var.vnet_name}-nsg"
+  location            = var.location
+  resource_group_name = var.resource_group_name
 
   # Allow RDP connections from specific IP ranges only
   # WARNING: Replace 0.0.0.0/0 with your specific IP range for better security
-  ingress_security_rules {
-    protocol    = "6"         # TCP
-    source      = "0.0.0.0/0" # SECURITY RISK: Restrict to specific IP ranges
-    stateless   = false
-    description = "Allow RDP access from specific IP ranges only"
-
-    tcp_options {
-      min = 3389
-      max = 3389
-    }
+  security_rule {
+    name                       = "RDP"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "3389"
+    source_address_prefix      = "0.0.0.0/0" # SECURITY RISK: Restrict to specific IP ranges
+    destination_address_prefix = "*"
   }
 
   # Allow WinRM connections from specific IP ranges only
   # WARNING: Replace 0.0.0.0/0 with your specific IP range for better security
-  ingress_security_rules {
-    protocol    = "6"         # TCP
-    source      = "0.0.0.0/0" # SECURITY RISK: Restrict to specific IP ranges
-    stateless   = false
-    description = "Allow WinRM access from specific IP ranges only"
-
-    tcp_options {
-      min = 5985
-      max = 5986
-    }
+  security_rule {
+    name                       = "WinRM"
+    priority                   = 110
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_ranges    = ["5985", "5986"]
+    source_address_prefix      = "0.0.0.0/0" # SECURITY RISK: Restrict to specific IP ranges
+    destination_address_prefix = "*"
   }
 
   # Allow SQL Server access from specific IP ranges only
   # WARNING: Replace 0.0.0.0/0 with your specific IP range for better security
-  ingress_security_rules {
-    protocol    = "6"         # TCP
-    source      = "0.0.0.0/0" # SECURITY RISK: Restrict to specific IP ranges
-    stateless   = false
-    description = "Allow SQL Server access from specific IP ranges only"
-
-    tcp_options {
-      min = 1433
-      max = 1433
-    }
-  }
-
-  # Allow all outbound traffic
-  egress_security_rules {
-    protocol    = "all"
-    destination = "0.0.0.0/0"
-    stateless   = false
-    description = "Allow all outbound traffic"
+  security_rule {
+    name                       = "SQLServer"
+    priority                   = 120
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "1433"
+    source_address_prefix      = "0.0.0.0/0" # SECURITY RISK: Restrict to specific IP ranges
+    destination_address_prefix = "*"
   }
 }
 
-# Subnet
-resource "oci_core_subnet" "subnet" {
-  compartment_id = var.compartment_id
-  display_name   = "${var.vcn_name}-subnet"
-  vcn_id         = oci_core_vcn.vcn.id
-  cidr_block     = cidrsubnet(var.vcn_cidr, 8, 1)
-  route_table_id = oci_core_route_table.route_table.id
-  security_list_ids = [
-    oci_core_security_list.security_list.id
-  ]
-  dns_label = "sqlserversub"
+# Associate the NSG with the Subnet
+resource "azurerm_subnet_network_security_group_association" "subnet_nsg_association" {
+  subnet_id                 = azurerm_subnet.subnet.id
+  network_security_group_id = azurerm_network_security_group.nsg.id
 }
 
-output "vcn_id" {
-  value = oci_core_vcn.vcn.id
+output "vnet_id" {
+  value = azurerm_virtual_network.vnet.id
 }
 
 output "subnet_id" {
-  value = oci_core_subnet.subnet.id
+  value = azurerm_subnet.subnet.id
 }

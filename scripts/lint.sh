@@ -1,5 +1,5 @@
 #!/bin/bash
-# Comprehensive linting script for the SQL Server Oracle Cloud project
+# Comprehensive linting script for the SQL Server Azure project
 set -e
 
 echo "===== Linting Terraform files ====="

@@ -1,0 +1,15 @@
+# Azure Authentication
+subscription_id     = "{{ vault_azure_subscription_id }}"
+tenant_id           = "{{ vault_azure_tenant_id }}"
+client_id           = "{{ vault_azure_client_id }}"
+client_secret       = "{{ vault_azure_client_secret }}"
+
+# Azure Configuration
+location            = "westeurope"
+resource_group_name = "sql-server-rg"
+
+# VM Configuration
+admin_username      = "azureuser"
+admin_password      = "{{ vault_windows_admin_password }}"
+vm_size             = "Standard_B1s"
+ssh_public_key      = "{{ vault_ssh_public_key }}"

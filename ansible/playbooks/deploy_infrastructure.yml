@@ -1,52 +1,111 @@
 ---
-- name: Deploy Oracle Cloud Infrastructure
+- name: Deploy SQL Server Infrastructure to Azure
   hosts: localhost
   connection: local
-  gather_facts: true
+  gather_facts: false
+
+  vars:
+    terraform_dir: "{{ playbook_dir }}/../../terraform/environments/dev"
+    terraform_vars_file: "{{ terraform_dir }}/terraform.tfvars.json"
 
   tasks:
+    - name: Ensure ~/.azure directory exists
+      ansible.builtin.file:
+        path: ~/.azure
+        state: directory
+        mode: '0700'
+
+    - name: Check if Azure CLI is installed
+      ansible.builtin.command: az --version
+      register: az_cli_check
+      ignore_errors: true
+      changed_when: false
+
+    - name: Fail if Azure CLI is not installed
+      ansible.builtin.fail:
+        msg: "Azure CLI is not installed. Please install it and try again."
+      when: az_cli_check.rc != 0
+
+    - name: Check if Terraform is installed
+      ansible.builtin.command: terraform --version
+      register: terraform_check
+      ignore_errors: true
+      changed_when: false
+
+    - name: Fail if Terraform is not installed
+      ansible.builtin.fail:
+        msg: "Terraform is not installed. Please install it and try again."
+      when: terraform_check.rc != 0
+
+    - name: Create terraform.tfvars.json from Ansible variables
+      ansible.builtin.copy:
+        dest: "{{ terraform_vars_file }}"
+        content: |
+          {
+            "subscription_id": "{{ azure_subscription_id }}",
+            "tenant_id": "{{ azure_tenant_id }}",
+            "client_id": "{{ azure_client_id }}",
+            "client_secret": "{{ azure_client_secret }}",
+            "location": "{{ azure_location }}",
+            "resource_group_name": "{{ azure_resource_group_name }}",
+            "admin_username": "{{ azure_admin_username }}",
+            "admin_password": "{{ azure_admin_password }}",
+            "vm_size": "{{ azure_vm_size }}",
+            "ssh_public_key": "{{ ssh_public_key }}"
+          }
+        mode: '0600'
+      no_log: true
+
     - name: Initialize Terraform
       ansible.builtin.command: terraform init
       args:
-        chdir: "{{ playbook_dir }}/../../terraform/environments/dev"
-      changed_when: false
+        chdir: "{{ terraform_dir }}"
+      register: terraform_init
+      changed_when: terraform_init.rc == 0
 
-    - name: Run Terraform plan with command line variables
-      ansible.builtin.command: terraform plan
+    - name: Run Terraform plan
+      ansible.builtin.command: terraform plan -out=tfplan -var-file={{ terraform_vars_file | basename }}
       args:
-        chdir: "{{ playbook_dir }}/../../terraform/environments/dev"
+        chdir: "{{ terraform_dir }}"
       register: terraform_plan
-      changed_when: false
+      changed_when: terraform_plan.rc == 0
 
-    - name: Apply Terraform changes with command line variables
-      ansible.builtin.command: terraform apply -auto-approve
+    - name: Apply Terraform changes
+      ansible.builtin.command: terraform apply -auto-approve tfplan
       args:
-        chdir: "{{ playbook_dir }}/../../terraform/environments/dev"
+        chdir: "{{ terraform_dir }}"
       register: terraform_apply
-      changed_when: false
-      failed_when: false
+      changed_when: terraform_apply.rc == 0
 
-    - name: Get Terraform outputs
-      ansible.builtin.command: terraform output -json
+    - name: Get SQL Server public IP
+      ansible.builtin.command: terraform output -raw sql_server_public_ip
       args:
-        chdir: "{{ playbook_dir }}/../../terraform/environments/dev"
-      register: terraform_output
+        chdir: "{{ terraform_dir }}"
+      register: sql_server_ip
       changed_when: false
+
+    - name: Wait for WinRM to become available
+      ansible.builtin.wait_for:
+        host: "{{ sql_server_ip.stdout }}"
+        port: 5986
+        delay: 60
+        timeout: 600
+      register: winrm_check
       failed_when: false
 
-    - name: Parse Terraform outputs
-      ansible.builtin.set_fact:
-        terraform_outputs: "{{ terraform_output.stdout | from_json if terraform_output.rc == 0 else {} }}"
-      failed_when: false
+    - name: Display connection information
+      ansible.builtin.debug:
+        msg:
+          - "SQL Server VM deployed successfully!"
+          - "Public IP: {{ sql_server_ip.stdout }}"
+          - "SQL Server connection: Server={{ sql_server_ip.stdout }};Integrated Security=true;"
+          - "RDP connection: mstsc /v:{{ sql_server_ip.stdout }}"
 
-    - name: Set Windows VM IP
-      ansible.builtin.set_fact:
-        windows_vm_ip: "{{ terraform_outputs.windows_vm_public_ip.value if terraform_outputs.windows_vm_public_ip is defined else 'unknown' }}"
-      failed_when: false
-
-    - name: Update Ansible inventory with Windows VM IP
-      ansible.builtin.template:
-        src: "{{ lookup('env', 'PWD') }}/templates/hosts.j2"
-        dest: "{{ lookup('env', 'PWD') }}/inventory/hosts"
-        mode: '0644'
-      failed_when: false
+    - name: Add SQL Server to inventory
+      ansible.builtin.add_host:
+        name: "{{ sql_server_ip.stdout }}"
+        groups: sql_servers
+        ansible_user: "{{ azure_admin_username }}"
+        ansible_password: "{{ azure_admin_password }}"
+        ansible_connection: winrm
+        ansible_winrm_server_cert_validation: ignore

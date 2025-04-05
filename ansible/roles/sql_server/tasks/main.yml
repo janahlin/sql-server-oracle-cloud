@@ -145,7 +145,7 @@
     dest: C:\SQLScripts\prevent_idle.ps1
     content: |
       # This script performs light CPU activity to prevent the VM from being reclaimed due to inactivity
-      # Oracle Cloud may reclaim Free Tier VMs if CPU usage is below 20% for a 7-day period
+      # Azure free tier resources might have restrictions on idle VMs
 
       # Run a simple CPU-consuming task
       $startTime = Get-Date

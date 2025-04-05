@@ -2,48 +2,49 @@ terraform {
   required_version = ">= 1.0.0"
 
   required_providers {
-    oci = {
-      source  = "oracle/oci"
-      version = ">= 4.0.0"
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 3.0"
     }
   }
 }
 
-variable "compartment_id" {
-  description = "OCID of the compartment to create resources in"
+variable "resource_group_name" {
+  description = "Name of the resource group"
+  type        = string
+}
+
+variable "location" {
+  description = "Azure region where resources will be created"
   type        = string
 }
 
 variable "subnet_id" {
-  description = "OCID of the subnet to place the VM in"
+  description = "ID of the subnet to place the VM in"
   type        = string
 }
 
-variable "availability_domain" {
-  description = "Availability Domain for the VM"
+variable "admin_username" {
+  description = "Admin username for the Windows VM"
   type        = string
 }
 
-variable "image_id" {
-  description = "OCID of the Windows Server image"
+variable "admin_password" {
+  description = "Admin password for the Windows VM"
   type        = string
+  sensitive   = true
 }
 
-variable "ssh_authorized_keys" {
-  description = "Public SSH key for remote access"
-  type        = string
-}
-
-variable "vm_display_name" {
-  description = "Display name for the VM"
+variable "vm_name" {
+  description = "Name for the VM"
   type        = string
   default     = "sqlserver-dev"
 }
 
-variable "shape" {
-  description = "Shape/size of the VM"
+variable "vm_size" {
+  description = "Size of the VM"
   type        = string
-  default     = "VM.Standard.E2.1.Micro" # Free Tier eligible
+  default     = "Standard_B1s"
 }
 
 # Bootstrap script to configure Windows for SQL Server and Ansible
@@ -81,33 +82,92 @@ New-Item -Path C:\\bootstrap_complete.txt -ItemType File -Value ""
 EOF
 }
 
-resource "oci_core_instance" "windows_vm" {
-  availability_domain = var.availability_domain
-  compartment_id      = var.compartment_id
-  display_name        = var.vm_display_name
-  shape               = var.shape
+# Create a public IP address
+resource "azurerm_public_ip" "public_ip" {
+  name                = "${var.vm_name}-pip"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  allocation_method   = "Dynamic"
+  domain_name_label   = lower(var.vm_name)
+}
 
-  create_vnic_details {
-    subnet_id        = var.subnet_id
-    display_name     = "${var.vm_display_name}-vnic"
-    assign_public_ip = true
+# Create a network interface
+resource "azurerm_network_interface" "nic" {
+  name                = "${var.vm_name}-nic"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+
+  ip_configuration {
+    name                          = "internal"
+    subnet_id                     = var.subnet_id
+    private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.public_ip.id
+  }
+}
+
+# Create the Windows VM
+resource "azurerm_windows_virtual_machine" "vm" {
+  name                  = var.vm_name
+  location              = var.location
+  resource_group_name   = var.resource_group_name
+  size                  = var.vm_size
+  admin_username        = var.admin_username
+  admin_password        = var.admin_password
+  network_interface_ids = [azurerm_network_interface.nic.id]
+  custom_data           = base64encode(local.bootstrap_ps1)
+  provision_vm_agent    = true
+
+  os_disk {
+    name                 = "${var.vm_name}-osdisk"
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
   }
 
-  source_details {
-    source_type = "image"
-    source_id   = var.image_id
+  source_image_reference {
+    publisher = "MicrosoftWindowsServer"
+    offer     = "WindowsServer"
+    sku       = "2019-Datacenter"
+    version   = "latest"
   }
+}
 
-  metadata = {
-    ssh_authorized_keys = var.ssh_authorized_keys
-    user_data           = base64encode(local.bootstrap_ps1)
-  }
+# Create a data disk for SQL Server
+resource "azurerm_managed_disk" "data_disk" {
+  name                 = "${var.vm_name}-datadisk"
+  location             = var.location
+  resource_group_name  = var.resource_group_name
+  storage_account_type = "Standard_LRS"
+  create_option        = "Empty"
+  disk_size_gb         = 100
+}
 
-  # This is required for the Free Tier shape
-  shape_config {
-    ocpus         = 1
-    memory_in_gbs = 1
-  }
+# Attach the data disk to the VM
+resource "azurerm_virtual_machine_data_disk_attachment" "data_disk_attach" {
+  managed_disk_id    = azurerm_managed_disk.data_disk.id
+  virtual_machine_id = azurerm_windows_virtual_machine.vm.id
+  lun                = 0
+  caching            = "ReadWrite"
+}
 
-  preserve_boot_volume = false
+# VM Extension for Custom Script
+resource "azurerm_virtual_machine_extension" "custom_script" {
+  name                 = "${var.vm_name}-customscript"
+  virtual_machine_id   = azurerm_windows_virtual_machine.vm.id
+  publisher            = "Microsoft.Compute"
+  type                 = "CustomScriptExtension"
+  type_handler_version = "1.10"
+
+  settings = <<SETTINGS
+    {
+      "commandToExecute": "powershell -ExecutionPolicy Unrestricted -File C:\\Windows\\Temp\\bootstrap.ps1"
+    }
+SETTINGS
+
+  protected_settings = <<PROTECTED_SETTINGS
+    {
+      "fileUris": ["https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1"]
+    }
+PROTECTED_SETTINGS
+
+  depends_on = [azurerm_windows_virtual_machine.vm]
 }

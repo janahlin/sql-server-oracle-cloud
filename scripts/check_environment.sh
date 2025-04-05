@@ -1,5 +1,5 @@
 #!/bin/bash
-# Environment check script for SQL Server on Oracle Cloud
+# Environment check script for SQL Server on Azure
 set -e
 
 # Color codes for output
@@ -63,26 +63,26 @@ check_command "ansible-playbook" || PREREQS_MET=false
 check_command "ansible-vault" || PREREQS_MET=false
 
 # Optional but recommended tools
-if check_command "oci"; then
-    # Try to verify OCI CLI configuration
-    if oci iam compartment list --query 'data[0].id' --output table &> /dev/null; then
-        echo -e "${GREEN}✓ OCI CLI correctly configured${NC}"
+if check_command "az"; then
+    # Try to verify Azure CLI configuration
+    if az account show &> /dev/null; then
+        echo -e "${GREEN}✓ Azure CLI correctly configured${NC}"
     else
-        echo -e "${YELLOW}⚠ OCI CLI installed but not properly configured${NC}"
-        echo "Run 'oci setup config' to configure"
+        echo -e "${YELLOW}⚠ Azure CLI installed but not logged in${NC}"
+        echo "Run 'az login' to log in to Azure"
     fi
 else
-    echo -e "${YELLOW}⚠ OCI CLI not installed (optional)${NC}"
-    echo "Consider installing with: pip install oci-cli"
+    echo -e "${YELLOW}⚠ Azure CLI not installed (recommended)${NC}"
+    echo "Consider installing Azure CLI for easier Azure management"
 fi
 
-check_command "jq" || echo -e "${YELLOW}⚠ jq not installed (optional)${NC}"
+check_command "jq" || echo -e "${YELLOW}⚠ jq not installed (optional but recommended)${NC}"
+check_command "python3" || echo -e "${YELLOW}⚠ python3 not installed (needed for the generate_tfvars.py script)${NC}"
 
 section "Checking Project Structure"
 
 # Check core directories
 check_dir "terraform/environments/dev" || PREREQS_MET=false
-check_dir "terraform/modules" || PREREQS_MET=false
 check_dir "ansible/playbooks" || PREREQS_MET=false
 check_dir "ansible/roles" || PREREQS_MET=false
 check_dir "ansible/group_vars/all" || PREREQS_MET=false
@@ -90,8 +90,11 @@ check_dir "ansible/group_vars/all" || PREREQS_MET=false
 # Check critical files
 check_file "terraform/environments/dev/main.tf" || PREREQS_MET=false
 check_file "terraform/environments/dev/variables.tf" || PREREQS_MET=false
+check_file "terraform/environments/dev/terraform.tfvars.template" || PREREQS_MET=false
 check_file "ansible/site.yml" || PREREQS_MET=false
 check_file "ansible/ansible.cfg" || PREREQS_MET=false
+check_file "ansible/group_vars/all/vars.yml" || PREREQS_MET=false
+check_file "scripts/generate_tfvars.py" || PREREQS_MET=false
 
 # Check for sensitive files
 if ! check_file "ansible/group_vars/all/vault.yml"; then
@@ -100,6 +103,10 @@ fi
 
 if ! check_file "ansible/.vault_pass.txt"; then
     echo -e "${YELLOW}⚠ Vault password file not found. Run deploy.sh to create it.${NC}"
+fi
+
+if ! check_file "terraform/environments/dev/terraform.tfvars"; then
+    echo -e "${YELLOW}⚠ terraform.tfvars not found. Run scripts/generate_tfvars.py to create it.${NC}"
 fi
 
 # Check Terraform configuration
@@ -114,21 +121,6 @@ else
 fi
 cd - > /dev/null
 
-# Check for Free Tier compliance
-section "Checking Free Tier Compliance"
-TERRAFORM_VARS_FILE="terraform/environments/dev/terraform.tfvars.json"
-if [ -f "$TERRAFORM_VARS_FILE" ]; then
-    if grep -q '"shape": "VM.Standard.E2.1.Micro"' "$TERRAFORM_VARS_FILE"; then
-        echo -e "${GREEN}✓ Using Free Tier eligible shape (VM.Standard.E2.1.Micro)${NC}"
-    else
-        echo -e "${YELLOW}⚠ Not using Free Tier eligible shape${NC}"
-        echo "Run ./scripts/update_tfvars.sh to update"
-    fi
-else
-    echo -e "${YELLOW}⚠ No terraform.tfvars.json found${NC}"
-    echo "Run ./scripts/update_tfvars.sh to create one"
-fi
-
 # Check Ansible configuration
 section "Checking Ansible Configuration"
 cd ansible
@@ -139,6 +131,16 @@ else
     PREREQS_MET=false
 fi
 cd - > /dev/null
+
+# Check Python dependencies for generate_tfvars.py
+section "Checking Python Dependencies"
+if python3 -c "import yaml" &> /dev/null; then
+    echo -e "${GREEN}✓ PyYAML module installed${NC}"
+else
+    echo -e "${YELLOW}⚠ PyYAML module not installed${NC}"
+    echo "Install with: pip install pyyaml"
+    PREREQS_MET=false
+fi
 
 # Summary
 section "Environment Check Summary"

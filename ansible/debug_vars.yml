@@ -8,8 +8,10 @@
     - name: Display loaded variables
       ansible.builtin.debug:
         msg:
-          - "oci_tenancy_ocid (exists: {{ oci_tenancy_ocid is defined }})"
-          - "vault_oci_tenancy_ocid (exists: {{ vault_oci_tenancy_ocid is defined }})"
+          - "azure_subscription_id (exists: {{ azure_subscription_id is defined }})"
+          - "vault_azure_subscription_id (exists: {{ vault_azure_subscription_id is defined }})"
+          - "azure_tenant_id (exists: {{ azure_tenant_id is defined }})"
+          - "vault_azure_tenant_id (exists: {{ vault_azure_tenant_id is defined }})"
 
     - name: Show inventory sources
       ansible.builtin.debug:
