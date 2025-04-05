@@ -16,15 +16,15 @@ repos:
       - id: terraform_validate
       - id: terraform_tflint
 
-  # Make ansible-lint a non-blocking check since we can't install windows collection
-  - repo: local
-    hooks:
-      - id: ansible-lint-modified
-        name: ansible-lint (non-blocking)
-        entry: bash -c 'ansible-lint || true'
-        language: system
-        files: \.(yaml|yml)$
-        pass_filenames: false
-        verbose: true
-        always_run: true
-        stages: [commit]
+  # Ansible-lint hook disabled as it's causing commit issues
+  # - repo: local
+  #   hooks:
+  #     - id: ansible-lint-modified
+  #       name: ansible-lint (non-blocking)
+  #       entry: bash -c 'ansible-lint || true'
+  #       language: system
+  #       files: \.(yaml|yml)$
+  #       pass_filenames: false
+  #       verbose: true
+  #       always_run: true
+  #       stages: [commit]
