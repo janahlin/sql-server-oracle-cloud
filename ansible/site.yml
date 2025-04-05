@@ -1,6 +1,8 @@
 ---
 # Import infrastructure deployment playbook
-- import_playbook: playbooks/deploy_infrastructure.yml
+- name: Deploy infrastructure to Oracle Cloud
+  import_playbook: "{{ playbook_dir }}/playbooks/deploy_infrastructure.yml"
 
 # Import SQL Server configuration playbook
-- import_playbook: playbooks/setup_sql_server.yml
+- name: Configure SQL Server on Windows VM
+  import_playbook: "{{ playbook_dir }}/playbooks/setup_sql_server.yml"

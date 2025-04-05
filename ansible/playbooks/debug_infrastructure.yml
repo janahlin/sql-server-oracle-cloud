@@ -25,6 +25,7 @@
     - name: Attempt to create terraform.tfvars.json from Ansible variables
       ansible.builtin.copy:
         dest: "{{ terraform_vars_file }}"
+        mode: '0600'
         content: |
           {
             "tenancy_ocid": "{{ oci_tenancy_ocid | default('UNDEFINED') }}",

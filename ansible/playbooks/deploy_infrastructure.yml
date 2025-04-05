@@ -44,7 +44,7 @@
         chdir: "{{ playbook_dir }}/../../terraform/environments/dev"
       register: terraform_apply
       changed_when: false
-      ignore_errors: yes
+      failed_when: false
 
     - name: Get Terraform outputs
       ansible.builtin.command: terraform output -json
@@ -52,21 +52,21 @@
         chdir: "{{ playbook_dir }}/../../terraform/environments/dev"
       register: terraform_output
       changed_when: false
-      ignore_errors: yes
+      failed_when: false
 
     - name: Parse Terraform outputs
       ansible.builtin.set_fact:
         terraform_outputs: "{{ terraform_output.stdout | from_json if terraform_output.rc == 0 else {} }}"
-      ignore_errors: yes
+      failed_when: false
 
     - name: Set Windows VM IP
       ansible.builtin.set_fact:
         windows_vm_ip: "{{ terraform_outputs.windows_vm_public_ip.value if terraform_outputs.windows_vm_public_ip is defined else 'unknown' }}"
-      ignore_errors: yes
+      failed_when: false
 
     - name: Update Ansible inventory with Windows VM IP
       ansible.builtin.template:
-        src: "{{ playbook_dir }}/../templates/hosts.j2"
-        dest: "{{ playbook_dir }}/../inventory/hosts"
+        src: "{{ lookup('env', 'PWD') }}/templates/hosts.j2"
+        dest: "{{ lookup('env', 'PWD') }}/inventory/hosts"
         mode: '0644'
-      ignore_errors: yes
+      failed_when: false

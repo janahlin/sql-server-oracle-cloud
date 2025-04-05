@@ -38,7 +38,14 @@
 
 - name: Install SQL Server Developer Edition
   ansible.windows.win_shell: |
-    Start-Process -FilePath "C:\sql_server_install\extracted\setup.exe" -ArgumentList "/ConfigurationFile=C:\sql_server_install\configuration.ini", "/IACCEPTSQLSERVERLICENSETERMS", "/QUIETSIMPLE" -Wait
+    $setupPath = "C:\sql_server_install\extracted\setup.exe"
+    $configPath = "C:\sql_server_install\configuration.ini"
+    $arguments = @(
+      "/ConfigurationFile=$configPath",
+      "/IACCEPTSQLSERVERLICENSETERMS",
+      "/QUIETSIMPLE"
+    )
+    Start-Process -FilePath $setupPath -ArgumentList $arguments -Wait
   args:
     creates: C:\Program Files\Microsoft SQL Server\MSSQL16.MSSQLSERVER
 
@@ -118,7 +125,7 @@
       Get-ChildItem -Path $backupDir -Filter "*.bak" | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-7) } | Remove-Item -Force
 
 - name: Create scheduled task for database backups
-  ansible.windows.win_scheduled_task:
+  community.windows.win_scheduled_task:
     name: SQL Server Backups
     description: Regular SQL Server database backups to prevent data loss
     actions:
@@ -154,7 +161,7 @@
       Add-Content -Path C:\SQLScripts\activity_log.txt -Value "Activity run completed at $(Get-Date)"
 
 - name: Create scheduled task for preventing idle reclamation
-  ansible.windows.win_scheduled_task:
+  community.windows.win_scheduled_task:
     name: Prevent Idle Reclamation
     description: Generates activity to prevent VM reclamation due to idleness
     actions:

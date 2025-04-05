@@ -10,12 +10,12 @@
         path: "{{ item }}"
       register: dir_check
       loop:
-        - "../terraform/environments/dev"
-        - "../terraform/modules/windows_vm"
-        - "../terraform/modules/network"
-        - "group_vars/all"
-        - "playbooks"
-        - "roles"
+        - "{{ playbook_dir }}/../../terraform/environments/dev"
+        - "{{ playbook_dir }}/../../terraform/modules/windows_vm"
+        - "{{ playbook_dir }}/../../terraform/modules/network"
+        - "{{ playbook_dir }}/../group_vars/all"
+        - "{{ playbook_dir }}"
+        - "{{ playbook_dir }}/../roles"
 
     - name: Report directory structure
       ansible.builtin.debug:
@@ -27,10 +27,10 @@
         path: "{{ item }}"
       register: tf_check
       loop:
-        - "../terraform/environments/dev/main.tf"
-        - "../terraform/environments/dev/variables.tf"
-        - "../terraform/modules/windows_vm/main.tf"
-        - "../terraform/modules/network/main.tf"
+        - "{{ playbook_dir }}/../../terraform/environments/dev/main.tf"
+        - "{{ playbook_dir }}/../../terraform/environments/dev/variables.tf"
+        - "{{ playbook_dir }}/../../terraform/modules/windows_vm/main.tf"
+        - "{{ playbook_dir }}/../../terraform/modules/network/main.tf"
 
     - name: Report Terraform files
       ansible.builtin.debug:
@@ -39,7 +39,7 @@
 
     - name: Check Ansible configuration
       ansible.builtin.stat:
-        path: "ansible.cfg"
+        path: "{{ playbook_dir }}/../ansible.cfg"
       register: ansible_cfg
 
     - name: Report Ansible configuration

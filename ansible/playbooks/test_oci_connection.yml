@@ -25,26 +25,27 @@
         SUPPRESS_LABEL_WARNING: "True"
 
     - name: Display available shapes
-      debug:
+      ansible.builtin.debug:
         msg: "Shape listing {{ 'succeeded' if oci_api_test.rc == 0 else 'failed' }}"
       when: oci_api_test.rc is defined
 
     - name: Test Windows Server 2019 image access
-      command: >
+      ansible.builtin.command: >
         oci compute image get
         --image-id ocid1.image.oc1.eu-stockholm-1.aaaaaaaavvubpflzqzb3i3fgw2rj72jsomhxubi4g7mjgp5jdofokqrbkn5q
       register: image_result
-      ignore_errors: yes
+      ignore_errors: true
+      changed_when: false
       environment:
         SUPPRESS_LABEL_WARNING: "True"
 
     - name: Display image test results
-      debug:
+      ansible.builtin.debug:
         msg: "Windows Server image test {{ 'succeeded' if image_result.rc == 0 else 'failed' }}"
       when: image_result.rc is defined
 
     - name: Report test status
-      debug:
+      ansible.builtin.debug:
         msg: "{{ item }}"
       loop:
         - "==============================================="

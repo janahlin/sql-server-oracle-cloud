@@ -1,3 +1,14 @@
+terraform {
+  required_version = ">= 1.0.0"
+
+  required_providers {
+    oci = {
+      source  = "oracle/oci"
+      version = ">= 4.0.0"
+    }
+  }
+}
+
 variable "compartment_id" {
   description = "OCID of the compartment to create resources in"
   type        = string
