@@ -2,18 +2,18 @@ terraform {
   required_version = ">= 1.0.0"
   required_providers {
     oci = {
-      source  = "hashicorp/oci"
+      source  = "oracle/oci"
       version = ">= 4.0.0"
     }
   }
 }
 
 provider "oci" {
-  tenancy_ocid     = var.tenancy_ocid
-  user_ocid        = var.user_ocid
-  fingerprint      = var.fingerprint
-  private_key_path = var.private_key_path
-  region           = var.region
+  tenancy_ocid = var.tenancy_ocid
+  user_ocid    = var.user_ocid
+  fingerprint  = var.fingerprint
+  private_key  = file("/home/janne/.oci/oci_api_key.pem")
+  region       = var.region
 }
 
 module "network" {
@@ -31,6 +31,7 @@ module "windows_vm" {
   image_id            = var.windows_image_id
   ssh_authorized_keys = var.ssh_public_key
   vm_display_name     = "sqlserver-dev"
+  shape               = var.shape
 }
 
 # Output the public IP of the Windows VM

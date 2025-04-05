@@ -12,34 +12,14 @@
       changed_when: false
 
     - name: Run Terraform plan with command line variables
-      ansible.builtin.command: >
-        terraform plan
-        -var="tenancy_ocid=ocid1.tenancy.oc1..aaaaaaaawcczb6nidnd6rfoqmbvqg6dihslqsrrgnw6kysz6yix4lcvig2va"
-        -var="user_ocid=ocid1.user.oc1..aaaaaaaahkxj6jzddyrmwb5ursmz76sesxlcn7htop2nfv3fb66jjzehftza"
-        -var="fingerprint=09:fd:0f:58:f5:5e:7f:1c:98:d7:a6:19:76:48:4e:8c"
-        -var="private_key_path=~/.oci/oci_api_key.pem"
-        -var="region=eu-stockholm-1"
-        -var="compartment_id=ocid1.tenancy.oc1..aaaaaaaawcczb6nidnd6rfoqmbvqg6dihslqsrrgnw6kysz6yix4lcvig2va"
-        -var="availability_domain=GiQi:EU-STOCKHOLM-1-AD-1"
-        -var="windows_image_id=ocid1.image.oc1.eu-stockholm-1.aaaaaaaavvubpflzqzb3i3fgw2rj72jsomhxubi4g7mjgp5jdofokqrbkn5q"
-        -var="shape=VM.Standard2.1"
+      ansible.builtin.command: terraform plan
       args:
         chdir: "{{ playbook_dir }}/../../terraform/environments/dev"
       register: terraform_plan
       changed_when: false
 
     - name: Apply Terraform changes with command line variables
-      ansible.builtin.command: >
-        terraform apply -auto-approve
-        -var="tenancy_ocid=ocid1.tenancy.oc1..aaaaaaaawcczb6nidnd6rfoqmbvqg6dihslqsrrgnw6kysz6yix4lcvig2va"
-        -var="user_ocid=ocid1.user.oc1..aaaaaaaahkxj6jzddyrmwb5ursmz76sesxlcn7htop2nfv3fb66jjzehftza"
-        -var="fingerprint=09:fd:0f:58:f5:5e:7f:1c:98:d7:a6:19:76:48:4e:8c"
-        -var="private_key_path=~/.oci/oci_api_key.pem"
-        -var="region=eu-stockholm-1"
-        -var="compartment_id=ocid1.tenancy.oc1..aaaaaaaawcczb6nidnd6rfoqmbvqg6dihslqsrrgnw6kysz6yix4lcvig2va"
-        -var="availability_domain=GiQi:EU-STOCKHOLM-1-AD-1"
-        -var="windows_image_id=ocid1.image.oc1.eu-stockholm-1.aaaaaaaavvubpflzqzb3i3fgw2rj72jsomhxubi4g7mjgp5jdofokqrbkn5q"
-        -var="shape=VM.Standard2.1"
+      ansible.builtin.command: terraform apply -auto-approve
       args:
         chdir: "{{ playbook_dir }}/../../terraform/environments/dev"
       register: terraform_apply

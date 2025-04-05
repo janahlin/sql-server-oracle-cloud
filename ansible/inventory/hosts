@@ -1,9 +1,9 @@
 [windows]
-# This will be populated dynamically from Terraform output
+sqlserver ansible_host=unknown
 
 [windows:vars]
-ansible_user=opc
+ansible_user=Administrator
 ansible_connection=winrm
 ansible_winrm_server_cert_validation=ignore
-ansible_winrm_transport=basic
-ansible_winrm_port=5985
+ansible_winrm_transport=ntlm
+ansible_port=5986

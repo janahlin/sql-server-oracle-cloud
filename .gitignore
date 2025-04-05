@@ -40,3 +40,4 @@ Thumbs.db
 *.swp
 *.swo
 *.bak
+terraform/environments/dev/.terraform.lock.hcl

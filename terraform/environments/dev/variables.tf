@@ -14,11 +14,6 @@ variable "fingerprint" {
   type        = string
 }
 
-variable "private_key_path" {
-  description = "Path to the private key file"
-  type        = string
-}
-
 variable "region" {
   description = "Oracle Cloud region"
   type        = string
@@ -42,4 +37,10 @@ variable "windows_image_id" {
 variable "ssh_public_key" {
   description = "SSH public key for remote access"
   type        = string
+}
+
+variable "shape" {
+  description = "Shape/size of the VM"
+  type        = string
+  default     = "VM.Standard.E2.1.Micro" # Free tier eligible shape
 }
