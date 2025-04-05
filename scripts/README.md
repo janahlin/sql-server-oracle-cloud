@@ -51,4 +51,4 @@ This directory contains scripts to help deploy, manage, and troubleshoot the SQL
 - All scripts should be run from the repository root directory
 - The backup directory contains older scripts that are kept for reference but not actively used
 - Make sure to set proper credentials before running any deployment script
-- Always use the Free Tier eligible shape (VM.Standard.E2.1.Micro) to avoid unexpected charges 
+- Always use the Free Tier eligible shape (VM.Standard.E2.1.Micro) to avoid unexpected charges

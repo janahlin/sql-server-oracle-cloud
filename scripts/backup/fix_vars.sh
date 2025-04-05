@@ -24,7 +24,7 @@ cat > ansible/group_vars/all/vars.yml << EOF
 # Non-sensitive variables
 deployment_environment: "dev"
 
-# Oracle Cloud variables 
+# Oracle Cloud variables
 oci_tenancy_ocid: "{{ vault_oci_tenancy_ocid }}"
 oci_user_ocid: "{{ vault_oci_user_ocid }}"
 oci_fingerprint: "{{ vault_oci_fingerprint }}"
@@ -66,4 +66,4 @@ EOF
 cd ansible
 ansible-vault encrypt /tmp/vault_content.yml --output=group_vars/all/vault.yml --vault-password-file=.vault_pass.txt
 
-echo "Variables fixed! Try running the deployment script again." 
+echo "Variables fixed! Try running the deployment script again."

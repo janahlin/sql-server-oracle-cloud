@@ -9,7 +9,7 @@ cat > ansible/group_vars/all/vars.yml << 'EOF'
 # Non-sensitive variables
 deployment_environment: "dev"
 
-# Oracle Cloud variables 
+# Oracle Cloud variables
 oci_tenancy_ocid: "{{ vault_oci_tenancy_ocid }}"
 oci_user_ocid: "{{ vault_oci_user_ocid }}"
 oci_fingerprint: "{{ vault_oci_fingerprint }}"
@@ -37,7 +37,7 @@ chmod 600 ansible/group_vars/all/vars.yml
 # Check if vault.yml exists and has the required variables
 if [ ! -f "ansible/group_vars/all/vault.yml" ]; then
   echo "Error: vault.yml is missing. Creating a template..."
-  
+
   # Create a template vault file
   cat > ansible/group_vars/all/vault.yml.template << 'EOF'
 ---
@@ -63,14 +63,14 @@ else
   # Get OCI CLI config if available
   if command -v oci &> /dev/null && [ -f ~/.oci/config ]; then
     echo "OCI CLI config found, getting values..."
-    
+
     # Get values from OCI config
     CONFIG_SECTION=$(sed -n '/\[DEFAULT\]/,/\[/p' ~/.oci/config | sed '/\[.*\]/d;/^$/d')
     TENANCY=$(echo "$CONFIG_SECTION" | grep "^tenancy=" | head -1 | cut -d'=' -f2 | tr -d ' ')
     USER=$(echo "$CONFIG_SECTION" | grep "^user=" | head -1 | cut -d'=' -f2 | tr -d ' ')
     FINGERPRINT=$(echo "$CONFIG_SECTION" | grep "^fingerprint=" | head -1 | cut -d'=' -f2 | tr -d ' ')
     KEY_FILE=$(echo "$CONFIG_SECTION" | grep "^key_file=" | head -1 | cut -d'=' -f2 | tr -d ' ')
-    
+
     # Create temporary vault content with actual values
     TMP_VAULT=$(mktemp)
     cat > "$TMP_VAULT" << EOF
@@ -86,12 +86,12 @@ vault_windows_admin_password: "YourSecurePassword123!"
 vault_ssh_private_key_path: "~/.ssh/id_rsa"
 vault_ssh_public_key: "$(cat ~/.ssh/id_rsa.pub 2>/dev/null || echo 'ssh-rsa YOUR_SSH_KEY')"
 EOF
-    
+
     # Create new vault.yml
     cd ansible
     ansible-vault encrypt "$TMP_VAULT" --output="group_vars/all/vault.yml" --vault-password-file=.vault_pass.txt
     cd ..
-    
+
     # Clean up
     rm "$TMP_VAULT"
     echo "Updated vault.yml with OCI config values"
@@ -102,4 +102,4 @@ EOF
   fi
 fi
 
-echo "Variable configuration complete. Try running the deployment again." 
+echo "Variable configuration complete. Try running the deployment again."

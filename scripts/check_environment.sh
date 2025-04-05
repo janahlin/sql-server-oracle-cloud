@@ -149,4 +149,4 @@ if [ "$PREREQS_MET" = true ]; then
 else
     echo -e "${RED}Some critical checks failed. Please fix the issues before deploying.${NC}"
     exit 1
-fi 
+fi

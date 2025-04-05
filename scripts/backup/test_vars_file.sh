@@ -11,10 +11,10 @@ cat > ansible/debug/test_vars.yml << 'EOF'
   hosts: localhost
   connection: local
   gather_facts: false
-  
+
   vars:
     terraform_vars_file: "debug/terraform.tfvars.json"
-  
+
   tasks:
     - name: Display all variables
       ansible.builtin.debug:
@@ -26,4 +26,4 @@ cat > ansible/debug/test_vars.yml << 'EOF'
           - "oci_region: {{ oci_region | default('UNDEFINED') }}"
           - "oci_compartment_id: {{ oci_compartment_id | default('UNDEFINED') }}"
           - "availability_domain: {{ availability_domain | default('UNDEFINED') }}"
-EOF 
+EOF

@@ -87,4 +87,4 @@ chmod +x scripts/update_tfvars.sh
 
 echo "Simplified VM configuration to use only essential parameters."
 echo "Try running the deployment again:"
-echo "./scripts/deploy.sh" 
+echo "./scripts/deploy.sh"

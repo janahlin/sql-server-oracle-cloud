@@ -91,7 +91,7 @@ check_result "Terraform validation" "fatal"
 if [ -f "terraform.tfvars.json" ]; then
     echo "Running terraform plan..."
     terraform plan -var-file=terraform.tfvars.json -no-color > /tmp/tf_plan_output 2>&1 || true
-    
+
     if grep -q "Error:" /tmp/tf_plan_output; then
         echo -e "${RED}✗ Terraform plan has errors${NC}"
         grep -A 2 "Error:" /tmp/tf_plan_output

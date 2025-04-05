@@ -31,4 +31,4 @@ fi
 echo "Fixing reserved variable name 'environment'..."
 sed -i 's/environment: "dev"/deployment_environment: "dev"/' ansible/group_vars/all/vars.yml
 
-echo "Fixes applied. Please edit your vault.yml if needed and try running the deployment again." 
+echo "Fixes applied. Please edit your vault.yml if needed and try running the deployment again."

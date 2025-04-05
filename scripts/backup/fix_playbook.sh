@@ -31,7 +31,7 @@ cat > ansible/playbooks/deploy_infrastructure.yml << EOF
     availability_domain: "GiQi:EU-STOCKHOLM-1-AD-1"
     windows_image_id: "ocid1.image.oc1.eu-stockholm-1.aaaaaaaavvubpflzqzb3i3fgw2rj72jsomhxubi4g7mjgp5jdofokqrbkn5q"
     ssh_public_key: "${SSH_KEY}"
-    
+
     terraform_dir: "{{ playbook_dir }}/../../terraform/environments/dev"
     terraform_vars_file: "{{ terraform_dir }}/terraform.tfvars.json"
 
@@ -97,4 +97,4 @@ EOF
 
 echo "Modified the deployment playbook with hardcoded values."
 echo "Try running the deployment again:"
-echo "./scripts/deploy.sh" 
+echo "./scripts/deploy.sh"

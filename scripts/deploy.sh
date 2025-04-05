@@ -48,7 +48,7 @@ if [ ! -f "ansible/.vault_pass.txt" ]; then
     echo -n "Enter a secure password for the Ansible Vault: "
     read -s VAULT_PASSWORD
     echo
-    
+
     echo "$VAULT_PASSWORD" > ansible/.vault_pass.txt
     chmod 600 ansible/.vault_pass.txt
     echo -e "${GREEN}Vault password file created${NC}"
@@ -60,7 +60,7 @@ if [ ! -f "ansible/group_vars/all/vault.yml" ]; then
     echo -e "${YELLOW}Vault file not found. You'll need to create it with your credentials.${NC}"
     echo "The vault file should contain your OCI credentials and other sensitive data."
     echo "A template will be opened for you to edit."
-    
+
     # Create a template vault file
     TMP_VAULT=$(mktemp)
     cat > "$TMP_VAULT" << EOF
@@ -76,10 +76,10 @@ vault_windows_admin_password: "Yp4sv!A8YmNFaR#wZ7E6"
 vault_ssh_private_key_path: "~/.ssh/id_rsa"
 vault_ssh_public_key: "$(cat ~/.ssh/id_rsa.pub 2>/dev/null || echo 'ssh-rsa AAAAB...your_public_key_here')"
 EOF
-    
+
     # Create the encrypted vault file
     ansible-vault encrypt "$TMP_VAULT" --output="ansible/group_vars/all/vault.yml" --vault-password-file=ansible/.vault_pass.txt
-    
+
     # Open the file for editing
     echo -e "${YELLOW}Please edit the vault file with your actual credentials${NC}"
     if command -v ansible-vault &> /dev/null; then
@@ -89,7 +89,7 @@ EOF
         echo "Please manually edit ansible/group_vars/all/vault.yml with your credentials."
         echo "You can use: ansible-vault edit ansible/group_vars/all/vault.yml --vault-password-file=ansible/.vault_pass.txt"
     fi
-    
+
     # Clean up
     rm "$TMP_VAULT"
 fi
@@ -119,7 +119,7 @@ ansible-playbook site.yml --vault-password-file=.vault_pass.txt
 if [ $? -eq 0 ]; then
     section "Deployment Complete"
     echo -e "${GREEN}SQL Server has been successfully deployed to Oracle Cloud!${NC}"
-    
+
     # Get the Windows VM IP if available
     if [ -f "inventory/hosts" ]; then
         VM_IP=$(grep -A1 windows inventory/hosts 2>/dev/null | tail -1 || echo "")
@@ -129,7 +129,7 @@ if [ $? -eq 0 ]; then
             echo -e "  - SQL Server Management Studio"
             echo -e "  - sqlcmd -S $VM_IP -U sa -P <password>"
             echo -e "  - RDP to $VM_IP (Administrator/your-windows-password)"
-            
+
             # Security reminder
             echo -e "\n${YELLOW}Important Security Note:${NC}"
             echo -e "Remember that your SQL Server is exposed to the internet."
@@ -143,7 +143,7 @@ if [ $? -eq 0 ]; then
     else
         echo -e "${YELLOW}Inventory file not found. Check deployment logs for connection details.${NC}"
     fi
-    
+
     echo -e "\n${BLUE}Recommendation:${NC} Create a snapshot or backup of your VM for disaster recovery."
 else
     section "Deployment Failed"
@@ -154,4 +154,4 @@ else
     echo -e "  - Network connectivity issues"
     echo -e "\nTry running the test script first: ./scripts/test_deployment.sh"
     exit 1
-fi 
+fi

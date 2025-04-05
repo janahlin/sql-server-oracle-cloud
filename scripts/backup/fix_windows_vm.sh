@@ -123,4 +123,4 @@ output "private_ip" {
 ENDOFFILE
 
 echo "Fixed Windows VM module configuration. Try running the deployment again:"
-echo "./scripts/deploy.sh" 
+echo "./scripts/deploy.sh"

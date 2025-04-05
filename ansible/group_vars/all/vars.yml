@@ -2,7 +2,7 @@
 # Non-sensitive variables
 deployment_environment: "dev"
 
-# Oracle Cloud variables 
+# Oracle Cloud variables
 oci_tenancy_ocid: "{{ vault_oci_tenancy_ocid }}"
 oci_user_ocid: "{{ vault_oci_user_ocid }}"
 oci_fingerprint: "{{ vault_oci_fingerprint }}"

@@ -76,44 +76,44 @@
       # SQL Server Backup Script
       $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
       $backupDir = "{{ sql_server_backup_dir }}"
-      
+
       # Ensure backup directory exists
       if (-not (Test-Path $backupDir)) {
           New-Item -Path $backupDir -ItemType Directory -Force
       }
-      
+
       # Connect to SQL Server and get all user databases
       $sqlConn = New-Object System.Data.SqlClient.SqlConnection
       $sqlConn.ConnectionString = "Server=localhost;Integrated Security=True"
       $sqlConn.Open()
-      
+
       $sqlCmd = New-Object System.Data.SqlClient.SqlCommand
       $sqlCmd.Connection = $sqlConn
       $sqlCmd.CommandText = "SELECT name FROM sys.databases WHERE database_id > 4"
-      
+
       $reader = $sqlCmd.ExecuteReader()
-      
+
       while ($reader.Read()) {
           $dbName = $reader["name"]
           $backupFile = "$backupDir\$dbName`_$timestamp.bak"
-          
+
           # Create new SQL connection for backup
           $backupConn = New-Object System.Data.SqlClient.SqlConnection
           $backupConn.ConnectionString = "Server=localhost;Integrated Security=True"
           $backupConn.Open()
-          
+
           $backupCmd = New-Object System.Data.SqlClient.SqlCommand
           $backupCmd.Connection = $backupConn
           $backupCmd.CommandText = "BACKUP DATABASE [$dbName] TO DISK = N'$backupFile' WITH INIT, COMPRESSION, STATS = 10"
-          
+
           Write-Host "Backing up database: $dbName to $backupFile"
           $backupCmd.ExecuteNonQuery()
-          
+
           $backupConn.Close()
       }
-      
+
       $sqlConn.Close()
-      
+
       # Clean up backups older than 7 days
       Get-ChildItem -Path $backupDir -Filter "*.bak" | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-7) } | Remove-Item -Force
 
@@ -139,17 +139,17 @@
     content: |
       # This script performs light CPU activity to prevent the VM from being reclaimed due to inactivity
       # Oracle Cloud may reclaim Free Tier VMs if CPU usage is below 20% for a 7-day period
-      
+
       # Run a simple CPU-consuming task
       $startTime = Get-Date
       $duration = New-TimeSpan -Minutes 5
-      
+
       # Use Get-Process as a simple non-intensive query that still produces some CPU activity
       while ((Get-Date) - $startTime -lt $duration) {
           Get-Process | Sort-Object CPU -Descending | Select-Object -First 10
           Start-Sleep -Seconds 30
       }
-      
+
       # Log activity
       Add-Content -Path C:\SQLScripts\activity_log.txt -Value "Activity run completed at $(Get-Date)"
 

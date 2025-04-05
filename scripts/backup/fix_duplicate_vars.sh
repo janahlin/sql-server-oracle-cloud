@@ -7,4 +7,4 @@ if [ -f terraform/modules/windows_vm/variables.tf ]; then
 fi
 
 echo "Fixed duplicate variable declarations. Try running the deployment again:"
-echo "./scripts/deploy.sh" 
+echo "./scripts/deploy.sh"

@@ -28,4 +28,4 @@ cd -
 
 echo "Fixed permissions and recreated terraform.tfvars.json with correct shape"
 echo "Try running the deployment again:"
-echo "./scripts/deploy.sh" 
+echo "./scripts/deploy.sh"

@@ -11,4 +11,4 @@ echo "Modified playbook to show actual error. Run the deployment again:"
 echo "./scripts/deploy.sh"
 echo
 echo "After checking the error, restore the original playbook with:"
-echo "mv ansible/playbooks/deploy_infrastructure.yml.backup ansible/playbooks/deploy_infrastructure.yml" 
+echo "mv ansible/playbooks/deploy_infrastructure.yml.backup ansible/playbooks/deploy_infrastructure.yml"

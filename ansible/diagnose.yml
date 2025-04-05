@@ -3,7 +3,7 @@
   hosts: localhost
   connection: local
   gather_facts: false
-  
+
   tasks:
     - name: Display all current variables
       ansible.builtin.debug:
@@ -30,7 +30,7 @@
 
     - name: List critical variables
       ansible.builtin.debug:
-        msg: 
+        msg:
           - "oci_tenancy_ocid: {{ oci_tenancy_ocid | default('UNDEFINED') }}"
           - "oci_user_ocid: {{ oci_user_ocid | default('UNDEFINED') }}"
           - "oci_fingerprint: {{ oci_fingerprint | default('UNDEFINED') }}"
@@ -41,7 +41,7 @@
           - "windows_image_id: {{ windows_image_id | default('UNDEFINED') }}"
           - "ssh_public_key: {{ ssh_public_key | default('UNDEFINED') }}"
 
-    - name: Check vault variables 
+    - name: Check vault variables
       ansible.builtin.debug:
         msg:
           - "vault_oci_tenancy_ocid: {{ vault_oci_tenancy_ocid | default('UNDEFINED') }}"

@@ -15,26 +15,26 @@ fi
 CONFIG_FILE=~/.oci/config
 if [ -f "$CONFIG_FILE" ]; then
     echo "Reading from OCI config file: $CONFIG_FILE"
-    
+
     # Get values from the DEFAULT profile section
     DEFAULT_SECTION=$(sed -n '/\[DEFAULT\]/,/\[/p' $CONFIG_FILE | sed '/\[.*\]/d;/^$/d')
-    
+
     # Get tenancy
     TENANCY_OCID=$(echo "$DEFAULT_SECTION" | grep "^tenancy=" | head -1 | cut -d'=' -f2 | tr -d ' ')
     echo "Tenancy OCID: $TENANCY_OCID"
-    
+
     # Get user
     USER_OCID=$(echo "$DEFAULT_SECTION" | grep "^user=" | head -1 | cut -d'=' -f2 | tr -d ' ')
     echo "User OCID: $USER_OCID"
-    
+
     # Get fingerprint
     FINGERPRINT=$(echo "$DEFAULT_SECTION" | grep "^fingerprint=" | head -1 | cut -d'=' -f2 | tr -d ' ')
     echo "Fingerprint: $FINGERPRINT"
-    
+
     # Get region
     REGION=$(echo "$DEFAULT_SECTION" | grep "^region=" | head -1 | cut -d'=' -f2 | tr -d ' ')
     echo "Region: $REGION"
-    
+
     # Get private key path
     PRIVATE_KEY_PATH=$(echo "$DEFAULT_SECTION" | grep "^key_file=" | head -1 | cut -d'=' -f2 | tr -d ' ')
     echo "Private Key Path: $PRIVATE_KEY_PATH"

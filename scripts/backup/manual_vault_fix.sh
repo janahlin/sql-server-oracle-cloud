@@ -9,13 +9,13 @@ if [ -f ~/.oci/config ]; then
   FINGERPRINT=$(echo "$CONFIG_SECTION" | grep "^fingerprint=" | head -1 | cut -d'=' -f2 | tr -d ' ')
   KEY_FILE=$(echo "$CONFIG_SECTION" | grep "^key_file=" | head -1 | cut -d'=' -f2 | tr -d ' ')
   SSH_KEY=$(cat ~/.ssh/id_rsa.pub 2>/dev/null || echo 'YOUR_SSH_KEY')
-  
+
   echo "Tenancy OCID: $TENANCY"
   echo "User OCID: $USER"
   echo "Fingerprint: $FINGERPRINT"
   echo "Key File: $KEY_FILE"
   echo "SSH Key: $SSH_KEY"
-  
+
   echo "========= Manual Steps ========="
   echo "1. Create a new vault.yml file with:"
   echo "   cd ansible"
@@ -41,4 +41,4 @@ if [ -f ~/.oci/config ]; then
 else
   echo "Error: OCI configuration file not found at ~/.oci/config"
   echo "Please run 'oci setup config' to configure the CLI"
-fi 
+fi

@@ -10,23 +10,23 @@ cat > ansible/debug_vars.yml << 'EOF'
   hosts: localhost
   connection: local
   gather_facts: false
-  
+
   tasks:
     - name: Display loaded variables
       ansible.builtin.debug:
-        msg: 
+        msg:
           - "oci_tenancy_ocid (exists: {{ oci_tenancy_ocid is defined }})"
           - "vault_oci_tenancy_ocid (exists: {{ vault_oci_tenancy_ocid is defined }})"
 
     - name: Show inventory sources
       ansible.builtin.debug:
         var: ansible_inventory_sources
-        
+
     - name: Show group_vars directory contents
       ansible.builtin.command: ls -la "{{ playbook_dir }}/group_vars/all"
       register: ls_output
       changed_when: false
-      
+
     - name: Display group_vars contents
       ansible.builtin.debug:
         var: ls_output.stdout_lines
@@ -63,10 +63,10 @@ sql_server_backup_dir: "C:\\SQLBackup"
 EOF
 
 echo "Created direct_vars.yml with OCI values from config."
-echo 
+echo
 echo "Variables should now be available. Try running the deployment again:"
 echo "cd .."
 echo "./scripts/deploy.sh"
 
 # Clean up
-rm ansible/debug_vars.yml 
+rm ansible/debug_vars.yml

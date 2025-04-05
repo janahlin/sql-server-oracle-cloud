@@ -11,7 +11,7 @@ if [ -f ~/.oci/config ]; then
   FINGERPRINT=$(echo "$CONFIG_SECTION" | grep "^fingerprint=" | head -1 | cut -d'=' -f2 | tr -d ' ')
   KEY_FILE=$(echo "$CONFIG_SECTION" | grep "^key_file=" | head -1 | cut -d'=' -f2 | tr -d ' ')
   SSH_KEY=$(cat ~/.ssh/id_rsa.pub 2>/dev/null || echo 'ssh-rsa YOUR_SSH_KEY')
-  
+
   # Manually decrypt the vault file
   if [ -f "ansible/.vault_pass.txt" ]; then
     VAULT_PASS=$(cat ansible/.vault_pass.txt)
@@ -19,7 +19,7 @@ if [ -f ~/.oci/config ]; then
       # Create a new vault.yml file directly
       echo "Creating new vault.yml file..."
       echo "$VAULT_PASS" > /tmp/vault_pass.txt
-      
+
       cat > /tmp/vault_content.yml << EOF
 ---
 # Oracle Cloud credentials
@@ -33,15 +33,15 @@ vault_windows_admin_password: "YourSecurePassword123!"
 vault_ssh_private_key_path: "~/.ssh/id_rsa"
 vault_ssh_public_key: "$SSH_KEY"
 EOF
-      
+
       # Encrypt the file using ansible-vault with vault-id
       cd ansible
       ansible-vault encrypt /tmp/vault_content.yml --output=group_vars/all/vault.yml --vault-id=default@.vault_pass.txt
-      
+
       # Clean up
       rm /tmp/vault_content.yml
       rm /tmp/vault_pass.txt
-      
+
       echo "Updated vault.yml with OCI configuration values"
     else
       echo "Error: vault.yml does not exist"
@@ -54,4 +54,4 @@ else
 fi
 
 echo "Try running the deployment again with:"
-echo "./scripts/deploy.sh" 
+echo "./scripts/deploy.sh"

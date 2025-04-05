@@ -26,7 +26,7 @@ if [ -f terraform/environments/dev/terraform.tfvars.json ]; then
   fi
 else
   echo -e "${YELLOW}No terraform.tfvars.json found in terraform/environments/dev/${NC}"
-  
+
   # Create a basic tfvars file with correct shape
   echo -e "Creating a basic terraform.tfvars.json file..."
   cat > terraform/environments/dev/terraform.tfvars.json << EOF

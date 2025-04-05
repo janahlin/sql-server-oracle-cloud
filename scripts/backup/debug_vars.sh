@@ -11,7 +11,7 @@ cat > debug_variables.yml << 'EOF'
   hosts: localhost
   connection: local
   gather_facts: false
-  
+
   vars:
     required_vars:
       - oci_tenancy_ocid
@@ -23,13 +23,13 @@ cat > debug_variables.yml << 'EOF'
       - availability_domain
       - windows_image_id
       - ssh_public_key
-  
+
   tasks:
     - name: Display variable status
       ansible.builtin.debug:
         msg: "{{ item }}: {{ lookup('vars', item, default='UNDEFINED') }}"
       loop: "{{ required_vars }}"
-      
+
     - name: Check for undefined variables
       ansible.builtin.fail:
         msg: "Required variable '{{ item }}' is undefined"
@@ -41,4 +41,4 @@ echo "Running variable check playbook..."
 ansible-playbook debug_variables.yml --vault-password-file=.vault_pass.txt
 
 # Clean up
-rm debug_variables.yml 
+rm debug_variables.yml

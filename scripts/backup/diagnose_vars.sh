@@ -23,7 +23,7 @@ cat > ansible/diagnose.yml << 'EOF'
   hosts: localhost
   connection: local
   gather_facts: false
-  
+
   tasks:
     - name: Display all current variables
       ansible.builtin.debug:
@@ -50,7 +50,7 @@ cat > ansible/diagnose.yml << 'EOF'
 
     - name: List critical variables
       ansible.builtin.debug:
-        msg: 
+        msg:
           - "oci_tenancy_ocid: {{ oci_tenancy_ocid | default('UNDEFINED') }}"
           - "oci_user_ocid: {{ oci_user_ocid | default('UNDEFINED') }}"
           - "oci_fingerprint: {{ oci_fingerprint | default('UNDEFINED') }}"
@@ -61,7 +61,7 @@ cat > ansible/diagnose.yml << 'EOF'
           - "windows_image_id: {{ windows_image_id | default('UNDEFINED') }}"
           - "ssh_public_key: {{ ssh_public_key | default('UNDEFINED') }}"
 
-    - name: Check vault variables 
+    - name: Check vault variables
       ansible.builtin.debug:
         msg:
           - "vault_oci_tenancy_ocid: {{ vault_oci_tenancy_ocid | default('UNDEFINED') }}"
@@ -82,7 +82,7 @@ echo "1. Check your vars.yml contents:"
 echo "   cat ansible/group_vars/all/vars.yml"
 echo
 echo "2. Edit your vault.yml:"
-echo "   cd ansible && ansible-vault edit group_vars/all/vault.yml --vault-password-file=.vault_pass.txt" 
+echo "   cd ansible && ansible-vault edit group_vars/all/vault.yml --vault-password-file=.vault_pass.txt"
 echo
 echo "3. Create template vars.yml if missing:"
 cat << 'EOT'
@@ -91,7 +91,7 @@ cat << 'EOT'
 # Non-sensitive variables
 deployment_environment: "dev"
 
-# Oracle Cloud variables 
+# Oracle Cloud variables
 oci_tenancy_ocid: "{{ vault_oci_tenancy_ocid }}"
 oci_user_ocid: "{{ vault_oci_user_ocid }}"
 oci_fingerprint: "{{ vault_oci_fingerprint }}"
@@ -115,4 +115,4 @@ sql_server_backup_dir: "C:\\SQLBackup"
 EOT
 
 # Clean up
-rm ansible/diagnose.yml 
+rm ansible/diagnose.yml

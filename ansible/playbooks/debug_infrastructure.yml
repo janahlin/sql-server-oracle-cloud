@@ -36,4 +36,4 @@
             "availability_domain": "{{ availability_domain | default('UNDEFINED') }}",
             "windows_image_id": "{{ windows_image_id | default('UNDEFINED') }}",
             "ssh_public_key": "{{ ssh_public_key | default('UNDEFINED') }}"
-          } 
+          }
