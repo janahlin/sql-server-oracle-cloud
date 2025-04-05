@@ -1,0 +1,56 @@
+---
+- name: Create temp directory for SQL Server installation
+  win_file:
+    path: C:\sql_server_install
+    state: directory
+
+- name: Download SQL Server Developer Edition
+  win_get_url:
+    url: "https://go.microsoft.com/fwlink/?linkid=866658"
+    dest: C:\sql_server_install\SQLServer.exe
+
+- name: Extract SQL Server installation files
+  win_shell: |
+    Start-Process -FilePath "C:\sql_server_install\SQLServer.exe" -ArgumentList "/q", "/x:C:\sql_server_install\extracted" -Wait
+
+- name: Create SQL Server configuration file
+  win_copy:
+    dest: C:\sql_server_install\configuration.ini
+    content: |
+      [OPTIONS]
+      ACTION="Install"
+      FEATURES=SQLENGINE
+      INSTANCENAME="MSSQLSERVER"
+      SQLSVCACCOUNT="NT Service\MSSQLSERVER"
+      SQLSYSADMINACCOUNTS="BUILTIN\Administrators"
+      SQLBACKUPDIR="{{ sql_server_backup_dir }}"
+      SQLUSERDBDIR="{{ sql_server_data_dir }}"
+      SQLUSERDBLOGDIR="{{ sql_server_log_dir }}"
+      SQLTEMPDBDIR="{{ sql_server_data_dir }}"
+      SQLTEMPDBLOGDIR="{{ sql_server_log_dir }}"
+      IACCEPTSQLSERVERLICENSETERMS="True"
+
+- name: Install SQL Server Developer Edition
+  win_shell: |
+    Start-Process -FilePath "C:\sql_server_install\extracted\setup.exe" -ArgumentList "/ConfigurationFile=C:\sql_server_install\configuration.ini", "/IACCEPTSQLSERVERLICENSETERMS", "/QUIETSIMPLE" -Wait
+
+- name: Configure SQL Server to allow remote connections
+  win_shell: |
+    # Enable TCP/IP Protocol
+    $smo = [reflection.assembly]::LoadWithPartialName("Microsoft.SqlServer.Smo")
+    $wmi = [reflection.assembly]::LoadWithPartialName("Microsoft.SqlServer.SqlWmiManagement")
+    
+    $uri = "ManagedComputer[@Name='$(hostname)']/ServerInstance[@Name='MSSQLSERVER']/ServerProtocol[@Name='Tcp']"
+    $computerName = $env:COMPUTERNAME
+    $moc = New-Object Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer $computerName
+    $tcp = $moc.GetSmoObject($uri)
+    $tcp.IsEnabled = $true
+    $tcp.Alter()
+    
+    # Restart SQL Server service
+    Restart-Service -Name "MSSQLSERVER" -Force
+
+- name: Cleanup installation files
+  win_file:
+    path: C:\sql_server_install
+    state: absent 
