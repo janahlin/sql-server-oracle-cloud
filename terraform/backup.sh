@@ -28,4 +28,4 @@ echo "Backup created at: $(date)" > "$BACKUP_DIR/manifest.txt"
 echo "Backed up files:" >> "$BACKUP_DIR/manifest.txt"
 find "$BACKUP_DIR" -type f -not -name "manifest.txt" >> "$BACKUP_DIR/manifest.txt"
 
-echo "Backup completed successfully in directory: $BACKUP_DIR" 
+echo "Backup completed successfully in directory: $BACKUP_DIR"

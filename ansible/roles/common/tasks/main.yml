@@ -1,22 +1,22 @@
 ---
 - name: Ensure PowerShell execution policy is unrestricted
-  win_shell: Set-ExecutionPolicy Unrestricted -Force
-  
+  ansible.windows.win_shell: Set-ExecutionPolicy Unrestricted -Force
+
 - name: Enable Remote Desktop
-  win_regedit:
+  ansible.windows.win_regedit:
     path: HKLM:\System\CurrentControlSet\Control\Terminal Server
     name: fDenyTSConnections
     data: 0
     type: dword
 
 - name: Enable Remote Desktop firewall rule
-  win_shell: Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+  ansible.windows.win_shell: Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
 
 - name: Create required directories
-  win_file:
+  ansible.windows.win_file:
     path: "{{ item }}"
     state: directory
   loop:
-    - "S:\\SQLData"
-    - "S:\\SQLLogs"
-    - "S:\\SQLBackup" 
+    - "{{ sql_server_data_dir }}"
+    - "{{ sql_server_log_dir }}"
+    - "{{ sql_server_backup_dir }}"

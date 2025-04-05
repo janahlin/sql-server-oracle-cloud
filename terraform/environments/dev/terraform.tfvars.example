@@ -1,0 +1,4 @@
+compartment_id      = "ocid1.compartment.oc1..exampleuniqueID"
+availability_domain = "AD-1"
+windows_image_id    = "ocid1.image.oc1..exampleuniqueID"
+ssh_public_key      = "ssh-rsa AAAA...example"

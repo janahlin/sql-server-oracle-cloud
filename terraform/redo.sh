@@ -16,7 +16,7 @@ list_backups() {
         echo "No backups found."
         exit 0
     fi
-    
+
     echo "Available backups:"
     ls -1 backups/ | while read -r backup; do
         echo "  $backup"
@@ -27,14 +27,14 @@ list_backups() {
 # Function to restore from backup
 restore_backup() {
     local backup_dir="backups/$1"
-    
+
     if [ ! -d "$backup_dir" ]; then
         echo "Error: Backup '$1' not found."
         exit 1
     fi
-    
+
     echo "Restoring from backup: $1"
-    
+
     # Restore Terraform state files
     echo "Restoring Terraform state files..."
     find "$backup_dir" -name "*.tfstate" -o -name "*.tfstate.backup" | while read -r file; do
@@ -43,7 +43,7 @@ restore_backup() {
             echo "Restored: $file"
         fi
     done
-    
+
     # Restore Terraform configuration files
     echo "Restoring Terraform configuration files..."
     find "$backup_dir" -name "*.tf" | while read -r file; do
@@ -52,7 +52,7 @@ restore_backup() {
             echo "Restored: $file"
         fi
     done
-    
+
     echo "Restore completed successfully."
 }
 
@@ -83,4 +83,4 @@ while [[ $# -gt 0 ]]; do
 done
 
 # If no arguments provided, show usage
-usage 
+usage

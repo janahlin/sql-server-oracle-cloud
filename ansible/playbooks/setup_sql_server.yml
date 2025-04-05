@@ -1,15 +1,22 @@
 ---
 - name: Setup SQL Server on Windows VM
   hosts: windows
-  gather_facts: yes
+  gather_facts: true
   vars:
     ansible_connection: winrm
     ansible_winrm_server_cert_validation: ignore
     sql_server_install_dir: "C:\\Program Files\\Microsoft SQL Server"
-    sql_server_data_dir: "S:\\SQLData"
-    sql_server_log_dir: "S:\\SQLLogs"
-    sql_server_backup_dir: "S:\\SQLBackup"
 
-  roles:
-    - common
-    - sql_server 
+  tasks:
+    - name: Wait for WinRM to be available
+      ansible.builtin.wait_for_connection:
+        timeout: 900
+        sleep: 10
+
+    - name: Include common role
+      ansible.builtin.include_role:
+        name: common
+
+    - name: Include SQL Server role
+      ansible.builtin.include_role:
+        name: sql_server

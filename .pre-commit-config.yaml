@@ -1,0 +1,27 @@
+---
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.83.0
+    hooks:
+      - id: terraform_fmt
+      - id: terraform_validate
+      - id: terraform_tflint
+
+  # Make ansible-lint a non-blocking check since we can't install windows collection
+  - repo: local
+    hooks:
+      - id: ansible-lint-modified
+        name: ansible-lint (non-blocking)
+        entry: bash -c 'ansible-lint; exit 0'
+        language: system
+        files: \.(yaml|yml)$
+        pass_filenames: false

@@ -1,0 +1,11 @@
+# Oracle Cloud credentials
+vault_oci_tenancy_ocid: "ocid1.tenancy.oc1..exampletenancy"
+vault_oci_user_ocid: "ocid1.user.oc1..exampleuser"
+vault_oci_fingerprint: "xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx"
+vault_oci_private_key_path: "~/.oci/oci_api_key.pem"
+vault_oci_region: "eu-stockholm-1"
+
+# Windows VM credentials
+vault_windows_admin_password: "YourSecurePassword123!"
+vault_ssh_private_key_path: "~/.ssh/id_rsa"
+vault_ssh_public_key: "ssh-rsa AAAA...yourpublickey"

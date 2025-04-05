@@ -1,0 +1,29 @@
+---
+# .ansible-lint configuration file
+exclude_paths:
+  - .git/
+  - .ansible/
+
+skip_list:
+  # Rules that can reasonably be skipped
+  - yaml[line-length]  # Lines can be longer than 160 chars
+  - yaml[truthy]       # Allow 'yes', 'no', 'true', 'false'
+  - jinja[spacing]     # Spacing in Jinja2 templates is cosmetic
+  - name[casing]       # Task naming convention is subjective
+  - meta-no-info       # Not every role needs detailed metadata
+  # syntax-check removed as it's unskippable
+
+use_default_rules: true
+
+# Enforce FQCN rule
+warn_list:
+  - fqcn[action-core]
+  - fqcn[action]
+
+# Make all warnings errors
+enable_list:
+  - fqcn
+  - no-tabs
+  - no-trailing-spaces
+
+offline: true

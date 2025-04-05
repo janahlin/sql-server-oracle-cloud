@@ -1,0 +1,19 @@
+---
+# Encrypted with ansible-vault
+# This file should contain all sensitive information
+
+# Oracle Cloud credentials
+vault_oci_tenancy_ocid: "ocid1.tenancy.oc1..example"
+vault_oci_user_ocid: "ocid1.user.oc1..example"
+vault_oci_fingerprint: "xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx"
+vault_oci_private_key_path: "~/.oci/oci_api_key.pem"
+
+# Windows VM credentials
+vault_windows_admin_password: "YourSecurePassword123!"
+vault_ssh_private_key_path: "~/.ssh/id_rsa"
+
+# Break long SSH key into multiple lines
+vault_ssh_public_key: >-
+  ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC6RSeQMbUn4UhB7A4TZjoKsYyHl0L5
+  oOmE7vOkk4Yc1U98FcbkJ4TQjKwW3oZ8DCdNT+9R1f0tPxw9qDMA+ipfqWfpj4Sdz8hr
+  9KWJ/your/long/key

@@ -26,6 +26,9 @@ terraform.rc
 
 # Ansible
 *.retry
+ansible/.vault_pass.txt
+ansible/inventory/hosts
+ansible/group
 
 # OS specific
 .DS_Store

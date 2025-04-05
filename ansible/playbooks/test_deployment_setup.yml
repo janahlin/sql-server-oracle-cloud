@@ -1,0 +1,73 @@
+---
+- name: Test Deployment Setup
+  hosts: localhost
+  connection: local
+  gather_facts: true
+
+  tasks:
+    - name: Check directory structure
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: dir_check
+      loop:
+        - "../terraform/environments/dev"
+        - "../terraform/modules/windows_vm"
+        - "../terraform/modules/network"
+        - "group_vars/all"
+        - "playbooks"
+        - "roles"
+
+    - name: Report directory structure
+      ansible.builtin.debug:
+        msg: "Directory {{ item.item }} {{ 'exists' if item.stat.exists else 'MISSING' }}"
+      loop: "{{ dir_check.results }}"
+
+    - name: Validate Terraform files
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: tf_check
+      loop:
+        - "../terraform/environments/dev/main.tf"
+        - "../terraform/environments/dev/variables.tf"
+        - "../terraform/modules/windows_vm/main.tf"
+        - "../terraform/modules/network/main.tf"
+
+    - name: Report Terraform files
+      ansible.builtin.debug:
+        msg: "Terraform file {{ item.item }} {{ 'exists' if item.stat.exists else 'MISSING' }}"
+      loop: "{{ tf_check.results }}"
+
+    - name: Check Ansible configuration
+      ansible.builtin.stat:
+        path: "ansible.cfg"
+      register: ansible_cfg
+
+    - name: Report Ansible configuration
+      ansible.builtin.debug:
+        msg: "Ansible configuration {{ 'exists' if ansible_cfg.stat.exists else 'MISSING' }}"
+
+    - name: Check Windows deployment readiness
+      ansible.builtin.debug:
+        msg: |
+          ==================== DEPLOYMENT READINESS REPORT ====================
+
+          To prepare for deployment:
+
+          1. Create vault.yml:
+             ansible-vault create group_vars/all/vault.yml
+
+          2. Create vault password file:
+             echo "your-secure-password" > .vault_pass.txt
+             chmod 600 .vault_pass.txt
+
+          3. Verify Terraform is installed:
+             terraform --version
+
+          4. Install OCI CLI (optional):
+             pip install oci-cli
+             oci setup config
+
+          5. Run deployment:
+             ansible-playbook site.yml
+
+          ==================================================================

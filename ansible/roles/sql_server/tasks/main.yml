@@ -1,20 +1,26 @@
 ---
 - name: Create temp directory for SQL Server installation
-  win_file:
+  ansible.windows.win_file:
     path: C:\sql_server_install
     state: directory
 
-- name: Download SQL Server Developer Edition
-  win_get_url:
+- name: Download SQL Server 2022 Developer Edition
+  ansible.windows.win_get_url:
     url: "https://go.microsoft.com/fwlink/?linkid=866658"
     dest: C:\sql_server_install\SQLServer.exe
+  register: download_result
+  until: download_result is succeeded
+  retries: 3
+  delay: 5
 
 - name: Extract SQL Server installation files
-  win_shell: |
+  ansible.windows.win_shell: |
     Start-Process -FilePath "C:\sql_server_install\SQLServer.exe" -ArgumentList "/q", "/x:C:\sql_server_install\extracted" -Wait
+  args:
+    creates: C:\sql_server_install\extracted
 
 - name: Create SQL Server configuration file
-  win_copy:
+  ansible.windows.win_copy:
     dest: C:\sql_server_install\configuration.ini
     content: |
       [OPTIONS]
@@ -31,26 +37,28 @@
       IACCEPTSQLSERVERLICENSETERMS="True"
 
 - name: Install SQL Server Developer Edition
-  win_shell: |
+  ansible.windows.win_shell: |
     Start-Process -FilePath "C:\sql_server_install\extracted\setup.exe" -ArgumentList "/ConfigurationFile=C:\sql_server_install\configuration.ini", "/IACCEPTSQLSERVERLICENSETERMS", "/QUIETSIMPLE" -Wait
+  args:
+    creates: C:\Program Files\Microsoft SQL Server\MSSQL16.MSSQLSERVER
 
 - name: Configure SQL Server to allow remote connections
-  win_shell: |
+  ansible.windows.win_shell: |
     # Enable TCP/IP Protocol
     $smo = [reflection.assembly]::LoadWithPartialName("Microsoft.SqlServer.Smo")
     $wmi = [reflection.assembly]::LoadWithPartialName("Microsoft.SqlServer.SqlWmiManagement")
-    
+
     $uri = "ManagedComputer[@Name='$(hostname)']/ServerInstance[@Name='MSSQLSERVER']/ServerProtocol[@Name='Tcp']"
     $computerName = $env:COMPUTERNAME
     $moc = New-Object Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer $computerName
     $tcp = $moc.GetSmoObject($uri)
     $tcp.IsEnabled = $true
     $tcp.Alter()
-    
+
     # Restart SQL Server service
     Restart-Service -Name "MSSQLSERVER" -Force
 
 - name: Cleanup installation files
-  win_file:
+  ansible.windows.win_file:
     path: C:\sql_server_install
-    state: absent 
+    state: absent

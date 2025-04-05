@@ -1,0 +1,12 @@
+---
+- name: Deploy SQL Server to Oracle Cloud
+  hosts: localhost
+  connection: local
+  gather_facts: true
+
+  tasks:
+    - name: Import infrastructure deployment playbook
+      ansible.builtin.import_playbook: playbooks/deploy_infrastructure.yml
+
+    - name: Import SQL Server configuration playbook
+      ansible.builtin.import_playbook: playbooks/setup_sql_server.yml

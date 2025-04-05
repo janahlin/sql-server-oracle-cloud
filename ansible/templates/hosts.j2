@@ -1,5 +1,5 @@
 [windows]
-# This will be populated dynamically from Terraform output
+{{ windows_vm_ip }}
 
 [windows:vars]
 ansible_user=opc
@@ -7,3 +7,4 @@ ansible_connection=winrm
 ansible_winrm_server_cert_validation=ignore
 ansible_winrm_transport=basic
 ansible_winrm_port=5985
+ansible_password={{ windows_admin_password }}
