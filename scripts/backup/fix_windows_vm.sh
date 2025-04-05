@@ -1,3 +1,9 @@
+#!/bin/bash
+
+# Back up the original file
+cp terraform/modules/windows_vm/main.tf terraform/modules/windows_vm/main.tf.bak
+
+cat > terraform/modules/windows_vm/main.tf << 'ENDOFFILE'
 variable "compartment_id" {
   description = "OCID of the compartment to create resources in"
   type        = string
@@ -32,7 +38,7 @@ variable "vm_display_name" {
 variable "shape" {
   description = "Shape/size of the VM"
   type        = string
-  default     = "VM.Standard.E2.1.Micro" # Free Tier eligible
+  default     = "VM.Standard.E2.1.Micro"
 }
 
 # Bootstrap script to configure Windows for SQL Server and Ansible
@@ -71,10 +77,15 @@ EOF
 }
 
 resource "oci_core_instance" "windows_vm" {
-  availability_domain = var.availability_domain
   compartment_id      = var.compartment_id
+  availability_domain = var.availability_domain
   display_name        = var.vm_display_name
   shape               = var.shape
+
+  source_details {
+    source_id   = var.image_id
+    source_type = "image"
+  }
 
   create_vnic_details {
     subnet_id        = var.subnet_id
@@ -82,21 +93,34 @@ resource "oci_core_instance" "windows_vm" {
     assign_public_ip = true
   }
 
-  source_details {
-    source_type = "image"
-    source_id   = var.image_id
-  }
-
   metadata = {
     ssh_authorized_keys = var.ssh_authorized_keys
     user_data           = base64encode(local.bootstrap_ps1)
   }
 
-  # This is required for the Free Tier shape
   shape_config {
     ocpus         = 1
     memory_in_gbs = 1
   }
-
-  preserve_boot_volume = false
 }
+ENDOFFILE
+
+cat > terraform/modules/windows_vm/outputs.tf << 'ENDOFFILE'
+output "instance_id" {
+  description = "OCID of the Windows VM instance"
+  value       = oci_core_instance.windows_vm.id
+}
+
+output "public_ip" {
+  description = "Public IP address of the Windows VM"
+  value       = oci_core_instance.windows_vm.public_ip
+}
+
+output "private_ip" {
+  description = "Private IP address of the Windows VM"
+  value       = oci_core_instance.windows_vm.private_ip
+}
+ENDOFFILE
+
+echo "Fixed Windows VM module configuration. Try running the deployment again:"
+echo "./scripts/deploy.sh" 

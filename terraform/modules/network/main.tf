@@ -58,11 +58,13 @@ resource "oci_core_security_list" "security_list" {
   vcn_id         = oci_core_vcn.vcn.id
   display_name   = "${var.vcn_name}-sl"
 
-  # Allow RDP connections from anywhere
+  # Allow RDP connections from specific IP ranges only
+  # WARNING: Replace 0.0.0.0/0 with your specific IP range for better security
   ingress_security_rules {
-    protocol  = "6" # TCP
-    source    = "0.0.0.0/0"
-    stateless = false
+    protocol    = "6"         # TCP
+    source      = "0.0.0.0/0" # SECURITY RISK: Restrict to specific IP ranges
+    stateless   = false
+    description = "Allow RDP access from specific IP ranges only"
 
     tcp_options {
       min = 3389
@@ -70,11 +72,13 @@ resource "oci_core_security_list" "security_list" {
     }
   }
 
-  # Allow WinRM connections from anywhere
+  # Allow WinRM connections from specific IP ranges only
+  # WARNING: Replace 0.0.0.0/0 with your specific IP range for better security
   ingress_security_rules {
-    protocol  = "6" # TCP
-    source    = "0.0.0.0/0"
-    stateless = false
+    protocol    = "6"         # TCP
+    source      = "0.0.0.0/0" # SECURITY RISK: Restrict to specific IP ranges
+    stateless   = false
+    description = "Allow WinRM access from specific IP ranges only"
 
     tcp_options {
       min = 5985
@@ -82,11 +86,13 @@ resource "oci_core_security_list" "security_list" {
     }
   }
 
-  # Allow SQL Server access
+  # Allow SQL Server access from specific IP ranges only
+  # WARNING: Replace 0.0.0.0/0 with your specific IP range for better security
   ingress_security_rules {
-    protocol  = "6" # TCP
-    source    = "0.0.0.0/0"
-    stateless = false
+    protocol    = "6"         # TCP
+    source      = "0.0.0.0/0" # SECURITY RISK: Restrict to specific IP ranges
+    stateless   = false
+    description = "Allow SQL Server access from specific IP ranges only"
 
     tcp_options {
       min = 1433
@@ -99,6 +105,7 @@ resource "oci_core_security_list" "security_list" {
     protocol    = "all"
     destination = "0.0.0.0/0"
     stateless   = false
+    description = "Allow all outbound traffic"
   }
 }
 

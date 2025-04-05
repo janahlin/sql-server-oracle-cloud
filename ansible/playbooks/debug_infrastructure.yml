@@ -1,0 +1,39 @@
+---
+- name: Debug Infrastructure Deployment
+  hosts: localhost
+  connection: local
+  gather_facts: true
+
+  vars:
+    terraform_dir: "{{ playbook_dir }}/../../terraform/environments/dev"
+    terraform_vars_file: "{{ terraform_dir }}/terraform.tfvars.json"
+
+  tasks:
+    - name: Debug available variables
+      ansible.builtin.debug:
+        msg:
+          - "oci_tenancy_ocid: {{ oci_tenancy_ocid | default('UNDEFINED') }}"
+          - "oci_user_ocid: {{ oci_user_ocid | default('UNDEFINED') }}"
+          - "oci_fingerprint: {{ oci_fingerprint | default('UNDEFINED') }}"
+          - "oci_private_key_path: {{ oci_private_key_path | default('UNDEFINED') }}"
+          - "oci_region: {{ oci_region | default('UNDEFINED') }}"
+          - "oci_compartment_id: {{ oci_compartment_id | default('UNDEFINED') }}"
+          - "availability_domain: {{ availability_domain | default('UNDEFINED') }}"
+          - "windows_image_id: {{ windows_image_id | default('UNDEFINED') }}"
+          - "ssh_public_key: {{ ssh_public_key | default('UNDEFINED') }}"
+
+    - name: Attempt to create terraform.tfvars.json from Ansible variables
+      ansible.builtin.copy:
+        dest: "{{ terraform_vars_file }}"
+        content: |
+          {
+            "tenancy_ocid": "{{ oci_tenancy_ocid | default('UNDEFINED') }}",
+            "user_ocid": "{{ oci_user_ocid | default('UNDEFINED') }}",
+            "fingerprint": "{{ oci_fingerprint | default('UNDEFINED') }}",
+            "private_key_path": "{{ oci_private_key_path | default('UNDEFINED') }}",
+            "region": "{{ oci_region | default('UNDEFINED') }}",
+            "compartment_id": "{{ oci_compartment_id | default('UNDEFINED') }}",
+            "availability_domain": "{{ availability_domain | default('UNDEFINED') }}",
+            "windows_image_id": "{{ windows_image_id | default('UNDEFINED') }}",
+            "ssh_public_key": "{{ ssh_public_key | default('UNDEFINED') }}"
+          } 

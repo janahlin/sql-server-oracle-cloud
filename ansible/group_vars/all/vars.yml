@@ -1,40 +1,25 @@
 ---
-# Non-sensitive variables that can be committed to Git
-
-# Oracle Cloud configuration
-oci_region: "{{ vault_oci_region | default('eu-stockholm-1') }}"
-oci_compartment_id: "{{ vault_oci_tenancy_ocid }}"  # Using tenancy as compartment for simplicity
-
-# Resource naming
-resource_prefix: "sql-dev"
+# Non-sensitive variables
 deployment_environment: "dev"
 
-# VM configuration for Free Tier x86
-vm_shape: "VM.Standard.E2.1.Micro"  # Free Tier x86 shape
-vm_ocpus: 1  # Fixed for this shape
-vm_memory_in_gbs: 1  # Fixed for this shape
-vm_os_disk_size_in_gbs: 50  # Reduced size due to Free Tier limits
-availability_domain: "AD-1"
-
-# Windows Server 2019 image ID for eu-stockholm-1 region
-windows_image_id: "ocid1.image.oc1.eu-stockholm-1.aaaaaaaavvubpflzqzb3i3fgw2rj72jsomhxubi4g7mjgp5jdofokqrbkn5q"  # Windows Server 2019 Standard
-
-# Network configuration
-vcn_cidr: "10.0.0.0/16"
-subnet_cidr: "10.0.1.0/24"
-
-# SQL Server configuration
-sql_server_data_dir: "C:\\SQLData"  # Changed from S: since free tier may not have extra volume
-sql_server_log_dir: "C:\\SQLLogs"
-sql_server_backup_dir: "C:\\SQLBackup"
-sql_server_version: "2022"
-sql_server_edition: "Developer"
-
-# Include sensitive information from vault
+# Oracle Cloud variables 
 oci_tenancy_ocid: "{{ vault_oci_tenancy_ocid }}"
 oci_user_ocid: "{{ vault_oci_user_ocid }}"
 oci_fingerprint: "{{ vault_oci_fingerprint }}"
 oci_private_key_path: "{{ vault_oci_private_key_path }}"
-windows_admin_password: "{{ vault_windows_admin_password }}"
-ssh_private_key_path: "{{ vault_ssh_private_key_path }}"
+oci_region: "eu-stockholm-1"
+oci_compartment_id: "{{ vault_oci_tenancy_ocid }}"  # Using tenancy as compartment
+
+# VM configuration
+availability_domain: "GiQi:EU-STOCKHOLM-1-AD-1"
+windows_image_id: "ocid1.image.oc1.eu-stockholm-1.aaaaaaaavvubpflzqzb3i3fgw2rj72jsomhxubi4g7mjgp5jdofokqrbkn5q"
 ssh_public_key: "{{ vault_ssh_public_key }}"
+
+# Network configuration
+vcn_name: "sqlserver-vcn"
+vcn_cidr: "10.0.0.0/16"
+
+# SQL Server configuration
+sql_server_data_dir: "C:\\SQLData"
+sql_server_log_dir: "C:\\SQLLogs"
+sql_server_backup_dir: "C:\\SQLBackup"

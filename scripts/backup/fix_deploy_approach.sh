@@ -1,3 +1,7 @@
+#!/bin/bash
+
+# Create a modified deployment playbook
+cat > ansible/playbooks/deploy_infrastructure.yml << 'ENDOFFILE'
 ---
 - name: Deploy Oracle Cloud Infrastructure
   hosts: localhost
@@ -70,3 +74,25 @@
         dest: "{{ playbook_dir }}/../inventory/hosts"
         mode: '0644'
       ignore_errors: yes
+ENDOFFILE
+
+# Create a template for the hosts file
+mkdir -p ansible/templates
+cat > ansible/templates/hosts.j2 << 'ENDOFFILE'
+[windows]
+sqlserver ansible_host={{ windows_vm_ip }}
+
+[windows:vars]
+ansible_user=Administrator
+ansible_connection=winrm
+ansible_winrm_server_cert_validation=ignore
+ansible_winrm_transport=ntlm
+ansible_port=5986
+ENDOFFILE
+
+# Make sure the inventory directory exists
+mkdir -p ansible/inventory
+
+echo "Modified deployment approach to use command-line variables instead of .tfvars file"
+echo "Try running the deployment again:"
+echo "ansible-playbook ansible/playbooks/deploy_infrastructure.yml" 

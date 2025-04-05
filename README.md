@@ -6,13 +6,13 @@ This repository contains infrastructure as code for deploying SQL Server Develop
 
 The architecture consists of the following components:
 
-1. **Windows Server 2022 VM** in Oracle Cloud Free Tier
+1. **Windows Server 2019 VM** in Oracle Cloud Free Tier
    - 2 OCPU (ARM64)
    - 8 GB RAM
    - 100 GB storage
 
 2. **SQL Server Developer Edition**
-   - Installed on Windows Server 2022
+   - Installed on Windows Server 2019
    - Configured for optimal performance in development environment
 
 3. **Controller VM**

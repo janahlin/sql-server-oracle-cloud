@@ -68,7 +68,7 @@ The script will output your OCI configuration details that you'll need for the A
    vm_ocpus: 2
    vm_memory_in_gbs: 8
    availability_domain: "AD-1"
-   windows_image_id: "ocid1.image.oc1..exampleimageID"  # Windows Server 2022 image OCID
+   windows_image_id: "ocid1.image.oc1..exampleimageID"  # Windows Server 2019 image OCID
    ```
 
 ## Step 5: Deploy the entire infrastructure
