@@ -125,7 +125,7 @@
       Get-ChildItem -Path $backupDir -Filter "*.bak" | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-7) } | Remove-Item -Force
 
 - name: Create scheduled task for database backups
-  community.windows.win_scheduled_task:
+  ansible.windows.win_scheduled_task:
     name: SQL Server Backups
     description: Regular SQL Server database backups to prevent data loss
     actions:
@@ -161,7 +161,7 @@
       Add-Content -Path C:\SQLScripts\activity_log.txt -Value "Activity run completed at $(Get-Date)"
 
 - name: Create scheduled task for preventing idle reclamation
-  community.windows.win_scheduled_task:
+  ansible.windows.win_scheduled_task:
     name: Prevent Idle Reclamation
     description: Generates activity to prevent VM reclamation due to idleness
     actions:

@@ -41,6 +41,14 @@ Error: compute.VirtualMachinesClient#CreateOrUpdate: Failure sending request: St
 2. Check if the Network Security Group allows traffic on ports 3389 (RDP) and 5985/5986 (WinRM).
 3. Ensure that the VM's public IP address is correct in your Ansible inventory.
 4. Reset the VM's password from the Azure portal if necessary.
+5. If you encounter NLA (Network Level Authentication) errors, disable NLA using Azure CLI:
+   ```bash
+   # Disable NLA authentication requirement
+   az vm run-command invoke --resource-group sql-server-rg --name sqlserver-dev --command-id RunPowerShellScript --scripts "REG ADD 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' /v UserAuthentication /t REG_DWORD /d 0 /f"
+
+   # Restart the VM to apply changes
+   az vm restart --resource-group sql-server-rg --name sqlserver-dev
+   ```
 
 **Commands to check**:
 ```bash

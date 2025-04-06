@@ -8,6 +8,17 @@
     terraform_dir: "{{ playbook_dir }}/../../terraform/environments/dev"
     terraform_vars_file: "{{ terraform_dir }}/terraform.tfvars.json"
 
+  pre_tasks:
+    - name: Include variables from vars.yml
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../group_vars/all/vars.yml"
+      tags: always
+
+    - name: Include variables from vault.yml
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../group_vars/all/vault.yml"
+      tags: always
+
   tasks:
     - name: Ensure ~/.azure directory exists
       ansible.builtin.file:
@@ -84,9 +95,19 @@
       register: sql_server_ip
       changed_when: false
 
+    - name: Get SQL Server public IP from Azure CLI if terraform output is empty
+      ansible.builtin.command: az vm list-ip-addresses --resource-group {{ azure_resource_group_name }} --name sqlserver-dev --query "[0].virtualMachine.network.publicIpAddresses[0].ipAddress" -o tsv
+      register: az_ip
+      changed_when: false
+      when: sql_server_ip.stdout == ""
+
+    - name: Set SQL Server IP variable
+      ansible.builtin.set_fact:
+        server_ip: "{{ az_ip.stdout if sql_server_ip.stdout == '' else sql_server_ip.stdout }}"
+
     - name: Wait for WinRM to become available
       ansible.builtin.wait_for:
-        host: "{{ sql_server_ip.stdout }}"
+        host: "{{ server_ip }}"
         port: 5986
         delay: 60
         timeout: 600
@@ -97,15 +118,31 @@
       ansible.builtin.debug:
         msg:
           - "SQL Server VM deployed successfully!"
-          - "Public IP: {{ sql_server_ip.stdout }}"
-          - "SQL Server connection: Server={{ sql_server_ip.stdout }};Integrated Security=true;"
-          - "RDP connection: mstsc /v:{{ sql_server_ip.stdout }}"
+          - "Public IP: {{ server_ip }}"
+          - "SQL Server connection: Server={{ server_ip }};Integrated Security=true;"
+          - "RDP connection: mstsc /v:{{ server_ip }}"
 
     - name: Add SQL Server to inventory
       ansible.builtin.add_host:
-        name: "{{ sql_server_ip.stdout }}"
+        name: "{{ server_ip }}"
         groups: sql_servers
         ansible_user: "{{ azure_admin_username }}"
         ansible_password: "{{ azure_admin_password }}"
         ansible_connection: winrm
         ansible_winrm_server_cert_validation: ignore
+
+    - name: Create inventory file for future use
+      ansible.builtin.copy:
+        dest: "{{ playbook_dir }}/../inventory/hosts"
+        content: |
+          [windows]
+          sqlserver ansible_host={{ server_ip }}
+
+          [windows:vars]
+          ansible_user={{ azure_admin_username }}
+          ansible_password={{ azure_admin_password }}
+          ansible_connection=winrm
+          ansible_winrm_server_cert_validation=ignore
+          ansible_winrm_transport=basic
+          ansible_port=5985
+        mode: '0644'

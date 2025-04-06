@@ -1,8 +1,8 @@
 ---
 # Import infrastructure deployment playbook
 - name: Deploy infrastructure to Azure
-  import_playbook: "{{ playbook_dir }}/playbooks/deploy_infrastructure.yml"
+  ansible.builtin.import_playbook: "{{ playbook_dir }}/playbooks/deploy_infrastructure.yml"
 
 # Import SQL Server configuration playbook
 - name: Configure SQL Server on Windows VM
-  import_playbook: "{{ playbook_dir }}/playbooks/setup_sql_server.yml"
+  ansible.builtin.import_playbook: "{{ playbook_dir }}/playbooks/configure_sql_server.yml"

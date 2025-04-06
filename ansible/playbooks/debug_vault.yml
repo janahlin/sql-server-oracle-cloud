@@ -1,0 +1,37 @@
+---
+- name: Debug Vault Variables Access
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  pre_tasks:
+    - name: Include variables from vars.yml
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../group_vars/all/vars.yml"
+      tags: always
+
+    - name: Include variables from vault.yml
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../group_vars/all/vault.yml"
+      tags: always
+
+  tasks:
+    - name: Check if we can access azure_subscription_id
+      ansible.builtin.debug:
+        msg: "Able to access azure_subscription_id: {{ azure_subscription_id | default('UNDEFINED') }}"
+      tags: always
+
+    - name: Check all required variables for terraform.tfvars.json
+      ansible.builtin.debug:
+        msg: |
+          azure_subscription_id: {{ azure_subscription_id | default('UNDEFINED') }}
+          azure_tenant_id: {{ azure_tenant_id | default('UNDEFINED') }}
+          azure_client_id: {{ azure_client_id | default('UNDEFINED') }}
+          azure_client_secret: exists? {{ (azure_client_secret is defined) | ternary('YES', 'NO') }}
+          azure_location: {{ azure_location | default('UNDEFINED') }}
+          azure_resource_group_name: {{ azure_resource_group_name | default('UNDEFINED') }}
+          azure_admin_username: {{ azure_admin_username | default('UNDEFINED') }}
+          azure_admin_password: exists? {{ (azure_admin_password is defined) | ternary('YES', 'NO') }}
+          azure_vm_size: {{ azure_vm_size | default('UNDEFINED') }}
+          ssh_public_key: exists? {{ (ssh_public_key is defined) | ternary('YES', 'NO') }}
+      tags: always

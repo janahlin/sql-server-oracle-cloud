@@ -107,6 +107,29 @@ After successful deployment, you can connect to:
    - **Username**: azureuser
    - **Password**: The password specified in terraform.tfvars
 
+### RDP Connection Issues
+
+If you encounter NLA (Network Level Authentication) errors when connecting via RDP, you can:
+
+1. **Disable NLA via Azure CLI**:
+   ```bash
+   # Disable NLA authentication requirement
+   az vm run-command invoke --resource-group sql-server-rg --name sqlserver-dev --command-id RunPowerShellScript --scripts "REG ADD 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' /v UserAuthentication /t REG_DWORD /d 0 /f"
+
+   # Restart the VM to apply changes
+   az vm restart --resource-group sql-server-rg --name sqlserver-dev
+   ```
+
+2. **Create and use a custom RDP file**:
+   Create a file named `connect.rdp` with the following content:
+   ```
+   full address:s:<PUBLIC_IP_ADDRESS>
+   username:s:azureuser
+   enablecredsspsupport:i:0
+   authentication level:i:0
+   ```
+   Then double-click the file to connect.
+
 ## Clean Up
 
 To destroy all created resources:
