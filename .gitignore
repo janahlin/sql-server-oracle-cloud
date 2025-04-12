@@ -41,3 +41,18 @@ Thumbs.db
 *.swo
 *.bak
 terraform/environments/dev/.terraform.lock.hcl
+
+# New additions from the code block
+*.tfplan
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+test_winrm.py
+**/__pycache__/
+*.pyc
+.env
+.venv/
+
+# Ansible
+ansible/inventory/hosts.yml
+!ansible/inventory/hosts.yml.template

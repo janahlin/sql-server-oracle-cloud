@@ -1,0 +1,21 @@
+---
+- hosts: sqlserver
+  gather_facts: false
+  tasks:
+    - name: Test SQL Server Connection
+      win_shell: |
+        try {
+          $SqlConnection = New-Object System.Data.SqlClient.SqlConnection
+          $SqlConnection.ConnectionString = "Server=localhost;Database=master;Integrated Security=True"
+          $SqlConnection.Open()
+          Write-Host "Connection Successful"
+          $SqlConnection.Close()
+        }
+        catch {
+          Write-Host "Connection Failed: $($_.Exception.Message)"
+        }
+      register: sql_connection_test
+
+    - name: Print SQL Server Connection Result
+      debug:
+        msg: "{{ sql_connection_test.stdout }}"

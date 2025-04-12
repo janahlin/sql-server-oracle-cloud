@@ -1,0 +1,12 @@
+---
+- hosts: sqlserver
+  gather_facts: false
+  tasks:
+    - name: Check SQL Server Service Status
+      ansible.windows.win_shell: |
+        Get-Service -Name "MSSQLSERVER" | Select-Object -ExpandProperty Status
+      register: sql_service_status
+
+    - name: Print SQL Server Service Status
+      ansible.builtin.debug:
+        msg: "SQL Server Service Status: {{ sql_service_status.stdout }}"
